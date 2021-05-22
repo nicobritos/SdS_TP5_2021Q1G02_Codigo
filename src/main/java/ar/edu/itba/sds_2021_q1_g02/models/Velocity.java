@@ -22,12 +22,12 @@ public class Velocity {
         return new Velocity(this.xSpeed, this.ySpeed);
     }
 
+    public boolean isZero(double epsilon) {
+        return Math.abs(this.xSpeed) <= epsilon && Math.abs(this.ySpeed) <= epsilon;
+    }
+    
     @Override
     public String toString() {
         return String.format("(%.5f, %.5f)", this.xSpeed, this.ySpeed);
-    }
-
-    public boolean isZero(double epsilon) {
-        return Math.abs(this.xSpeed) <= epsilon && Math.abs(this.ySpeed) <= epsilon;
     }
 }

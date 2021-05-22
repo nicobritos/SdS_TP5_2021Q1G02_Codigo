@@ -7,31 +7,25 @@ import java.util.Objects;
 
 public class Particle {
     private final int id;
-    private final double minRadius;
-    private final double maxRadius;
-    private final Set<Particle> neighbors;
+    private Radius radius;
     private Position position;
     private Velocity velocity;
+    private final Set<Particle> neighbors;
 
-    public Particle(int id, double minRadius, double maxRadius, Position position, Velocity velocity) {
+    public Particle(int id, Radius radius, Position position, Velocity velocity) {
         this.id = id;
-        this.minRadius = minRadius;
-        this.maxRadius = maxRadius;
-        this.neighbors = new HashSet<>();
+        this.radius = radius;
         this.position = position;
         this.velocity = velocity;
+        this.neighbors = new HashSet<>();
     }
 
     public int getId() {
         return this.id;
     }
 
-    public double getMinRadius() {
-        return this.minRadius;
-    }
-
-    public double getMaxRadius() {
-        return this.maxRadius;
+    public Radius getRadius() {
+        return this.radius;
     }
 
     public Position getPosition() {
@@ -55,7 +49,7 @@ public class Particle {
     }
 
     public Particle copy() {
-        Particle particle = new Particle(this.id, this.minRadius, this.maxRadius, this.position, this.velocity);
+        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity);
 
         if (this.position != null)
             particle.setPosition(this.position.copy());
@@ -66,7 +60,8 @@ public class Particle {
     }
 
     public double distanceTo(Particle other) {
-        return (this.getPosition().distanceTo(other.getPosition()) - this.getMinRadius()) - other.getMaxRadius();
+        //TODO: Check if radius must be considered or not
+        return (this.getPosition().distanceTo(other.getPosition()) - this.getRadius().getCurrentRadius()) - other.getRadius().getCurrentRadius();
     }
 
     @Override
