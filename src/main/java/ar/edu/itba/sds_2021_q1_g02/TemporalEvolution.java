@@ -25,4 +25,9 @@ public class TemporalEvolution {
         return isInContact ? minRadius : currentRadius < maxRadius ? currentRadius + (maxRadius / (tau / dt)) :
                 currentRadius;
     }
+
+    private static double calculateDesiredVelocity(double position, double targetPosition, double velocity) {
+        double target = (targetPosition - position) / Math.abs(targetPosition - position);
+        return velocity * target;
+    }
 }
