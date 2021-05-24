@@ -1,4 +1,4 @@
-package ar.edu.itba.sds_2021_q1_g02;
+package ar.edu.itba.sds_2021_q1_g02.operatingModel;
 
 import ar.edu.itba.sds_2021_q1_g02.models.Radius;
 
