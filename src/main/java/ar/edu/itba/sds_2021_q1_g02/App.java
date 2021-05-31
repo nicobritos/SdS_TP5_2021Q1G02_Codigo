@@ -34,11 +34,11 @@ public class App {
     public static void main(String[] args) {
         System.out.println("------------- 3.b -------------");
         App.simulationA();
-        System.out.println("--------------------------------------");
+        System.out.println("-------------------------------");
     }
 
     private static void simulationA() {
-        for (int i = 0; i < App.S_B_ZOMBIES.length; i++) {
+        for (int i = 0; i < 1; i++) {
             App.simulate(App.S_B_ZOMBIES[i], 1);
         }
     }
@@ -65,7 +65,7 @@ public class App {
         Simulation simulation = new Simulation(configuration);
 
         simulation.addSerializer(new OvitoSerializer(
-                (systemParticles, step) -> systemParticles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
+                (systemParticles, step) -> systemParticles.size() + 2 + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
                         ":2:Velocity:R:2:color:R:3",
                 (particle, step) -> {
                     Color color = getParticleColor(particle);
@@ -82,6 +82,7 @@ public class App {
                             color.getBlue();
                 },
                 step -> "R:/output/simulation_" + maxZombies + "_" + vz + "_" + step + ".xyz",
+                configuration,
                 App.SERIALIZE_EVERY
         ));
 
@@ -89,6 +90,9 @@ public class App {
     }
 
     private static Color getParticleColor(Particle particle) {
+        if (particle.getId() < 0)
+            return new Color(0.0001, 0.0001, 0.0001);
+
         if (particle.getState().equals(State.HUMAN)) {
             return new Color(0, 0, 1.0);
         } else {

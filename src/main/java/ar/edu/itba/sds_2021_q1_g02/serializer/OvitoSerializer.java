@@ -1,7 +1,6 @@
 package ar.edu.itba.sds_2021_q1_g02.serializer;
 
-import ar.edu.itba.sds_2021_q1_g02.models.Particle;
-import ar.edu.itba.sds_2021_q1_g02.models.Step;
+import ar.edu.itba.sds_2021_q1_g02.models.*;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -13,13 +12,15 @@ public class OvitoSerializer extends Serializer {
     private final StepFormatter stepFormatter;
     private final ParticleFormatter particleFormatter;
     private final FileFormatter fileFormatter;
+    private final SimulationConfiguration configuration;
 
-    public OvitoSerializer(StepFormatter stepFormatter, ParticleFormatter particleFormatter, FileFormatter fileFormatter, double serializeEvery) {
+    public OvitoSerializer(StepFormatter stepFormatter, ParticleFormatter particleFormatter, FileFormatter fileFormatter, SimulationConfiguration configuration, double serializeEvery) {
         super(serializeEvery);
 
         this.stepFormatter = stepFormatter;
         this.particleFormatter = particleFormatter;
         this.fileFormatter = fileFormatter;
+        this.configuration = configuration;
     }
 
     @Override
@@ -44,6 +45,16 @@ public class OvitoSerializer extends Serializer {
 
             writer.write(this.stepFormatter.format(particles, step));
             writer.write("\n");
+            writer.write(this.particleFormatter.format(
+                    this.generatePointParticle(new Position(0, this.configuration.getBounds().getHeight())),
+                    step
+            ));
+            writer.write("\n");
+            writer.write(this.particleFormatter.format(
+                    this.generatePointParticle(new Position(this.configuration.getBounds().getWidth(), 0)),
+                    step
+            ));
+            writer.write("\n");
             for (Particle p : particles) {
                 writer.write(this.particleFormatter.format(p, step));
                 writer.write("\n");
@@ -53,5 +64,15 @@ public class OvitoSerializer extends Serializer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Particle generatePointParticle(Position position) {
+        return new Particle(
+                -2,
+                new Radius(0.01, 0.01, 0.01),
+                position,
+                new Velocity(0, 0),
+                State.HUMAN
+        );
     }
 }
