@@ -6,6 +6,7 @@ import ar.edu.itba.sds_2021_q1_g02.serializer.Serializable;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Simulation extends Serializable {
@@ -64,8 +65,13 @@ public class Simulation extends Serializable {
     }
 
     private void moveParticles(double dt) {
-        for (Particle particle : this.particles) {
+        Iterator<Particle> iterator = this.particles.iterator();
+        while (iterator.hasNext()) {
+            Particle particle = iterator.next();
             particle.move(dt);
+            if (this.hasReachedDoor(particle)) {
+                iterator.remove();
+            }
         }
     }
 
@@ -109,36 +115,38 @@ public class Simulation extends Serializable {
     }
 
     private Position getHumanStartingPosition() {
-        double minX = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
+        double minY = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
                 + this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxX = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
+        double maxY = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
                 - this.configuration.getParticleConfiguration().getMaxRadius();
+        double maxX = this.configuration.getBounds().getWidth() - this.configuration.getBounds().getZombieBoundWidth();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
-        double x = minX;
-        double y = this.configuration.getParticleConfiguration().getMaxRadius();
-        boolean positionTaken = true;
-        do {
-            for (Particle particle : this.particles) {
-                if (!Simulation.isParticleIn(particle, x, y)) {
-                    positionTaken = false;
-                    break;
-                }
-            }
+        double x = this.configuration.getParticleConfiguration().getMaxRadius();
+        double y = minY;
+
+        boolean positionTaken = !this.particles.isEmpty();
+        while (positionTaken) {
+            positionTaken = this.isPositionTaken(x, y);
             if (!positionTaken)
                 break;
 
-            if (x + diameter >= maxX) {
-                x = minX;
-                y += diameter;
+            if (y + diameter >= maxY) {
+                if (minY - diameter > 0) {
+                    y = minY -= diameter;
+                    maxY += diameter;
+                } else {
+                    y = minY;
+                }
+                x += diameter;
 
-                if (y >= this.configuration.getBounds().getWidth()) {
+                if (x >= maxX) {
                     throw new IllegalStateException("No hay mas espacio para meter humanos!");
                 }
             } else {
-                x += diameter;
+                y += diameter;
             }
-        } while (positionTaken);
+        }
 
         return new Position(x, y);
     }
@@ -148,6 +156,31 @@ public class Simulation extends Serializable {
                 this.configuration.getBounds().getWidth(),
                 (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
         );
+    }
+
+    private boolean isPositionTaken(double x, double y) {
+        boolean positionTaken = false;
+        for (Particle particle : this.particles) {
+            if (!Simulation.isParticleIn(particle, x, y)) {
+                if (positionTaken)
+                    positionTaken = false;
+            } else {
+                if (!positionTaken)
+                    positionTaken = true;
+            }
+        }
+        return positionTaken;
+    }
+
+    private boolean hasReachedDoor(Particle particle) {
+        return Simulation.isHuman(particle)
+                && particle.getPosition().getX() >= this.configuration.getBounds().getWidth()
+                && particle.getPosition().getY() >= (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
+                && particle.getPosition().getY() <= (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2;
+    }
+
+    private static boolean isHuman(Particle particle) {
+        return particle.getState().equals(State.HUMAN);
     }
 
     private static boolean isParticleIn(Particle particle, double x, double y) {
