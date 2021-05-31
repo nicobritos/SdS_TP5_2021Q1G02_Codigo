@@ -1,9 +1,18 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
+import ar.edu.itba.sds_2021_q1_g02.models.Bounds;
+import ar.edu.itba.sds_2021_q1_g02.models.ParticleConfiguration;
 import ar.edu.itba.sds_2021_q1_g02.models.SimulationConfiguration;
 import ar.edu.itba.sds_2021_q1_g02.serializer.*;
 
 public class App {
+    private static final Bounds BOUNDS = new Bounds(
+            20,
+            20,
+            10,
+            3
+    );
+
     private static final double DT = 0.01; // Paper dice 0.05
     private static final double MIN_RADIUS = 0.1; // Paper set of parameters 2
     private static final double MAX_RADIUS = 0.37;
@@ -40,20 +49,23 @@ public class App {
         }
     }
 
-    private static void simulate(int zombies, double vz) {
+    private static void simulate(int maxZombies, double vz) {
         SimulationConfiguration configuration = new SimulationConfiguration(
                 App.DT,
-                App.MIN_RADIUS,
-                App.MAX_RADIUS,
-                App.BETA,
+                new ParticleConfiguration(
+                        App.MIN_RADIUS,
+                        App.MAX_RADIUS,
+                        App.BETA,
+                        App.VH,
+                        vz,
+                        App.ZOMBIES_FOV
+                ),
                 App.ZOMBIE_TURN_TIME,
-                App.VH,
-                vz,
-                App.ZOMBIES_FOV,
-                zombies,
+                maxZombies,
                 App.MAX_HUMANS,
                 App.SPAWN_HUMANS_EVERY,
-                App.HUMANS_PER_SPAWN
+                App.HUMANS_PER_SPAWN,
+                App.BOUNDS
         );
 
         Simulation simulation = new Simulation(configuration);

@@ -25,6 +25,10 @@ public class Velocity {
     public boolean isZero(double epsilon) {
         return Math.abs(this.xSpeed) <= epsilon && Math.abs(this.ySpeed) <= epsilon;
     }
+
+    public double magnitude() {
+        return Math.sqrt(Math.pow(this.xSpeed, 2) + Math.pow(this.ySpeed, 2));
+    }
     
     @Override
     public String toString() {
