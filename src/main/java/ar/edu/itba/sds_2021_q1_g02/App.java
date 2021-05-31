@@ -1,8 +1,6 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
-import ar.edu.itba.sds_2021_q1_g02.models.Bounds;
-import ar.edu.itba.sds_2021_q1_g02.models.ParticleConfiguration;
-import ar.edu.itba.sds_2021_q1_g02.models.SimulationConfiguration;
+import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.*;
 
 public class App {
@@ -27,7 +25,7 @@ public class App {
     private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
     private static final double[] S_C_VZS = {0.4, 0.8, 1.2, 1.6, 2, 2.4};
 
-    private static final double SERIALIZE_EVERY = 0.1;
+    private static final double SERIALIZE_EVERY = 0.5;
     private static final SimulationSerializer SIMULATION_SERIALIZER = new SimulationSerializer(
             step -> "R:/output/simulation_1.tsv",
             App.SERIALIZE_EVERY
@@ -37,10 +35,6 @@ public class App {
         System.out.println("------------- 3.b -------------");
         App.simulationA();
         System.out.println("--------------------------------------");
-
-//        System.out.println("------------- 3.b -------------");
-//        App.radiationSimulation();
-//        System.out.println("--------------------------------------");
     }
 
     private static void simulationA() {
@@ -69,14 +63,36 @@ public class App {
         );
 
         Simulation simulation = new Simulation(configuration);
+
+        simulation.addSerializer(new OvitoSerializer(
+                (systemParticles, step) -> systemParticles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
+                        ":2:Velocity:R:2:color:R:3",
+                (particle, step) -> {
+                    Color color = getParticleColor(particle);
+
+                    // id (1), radius (1), pos (2), size (1), color (3, RGB)";
+                    return particle.getId() + "\t" +
+                            particle.getRadius().getCurrentRadius() + "\t" +
+                            particle.getPosition().getX() + "\t" +
+                            particle.getPosition().getY() + "\t" +
+                            particle.getVelocity().getxSpeed() + "\t" +
+                            particle.getVelocity().getySpeed() + "\t" +
+                            color.getRed() + "\t" +
+                            color.getGreen() + "\t" +
+                            color.getBlue();
+                },
+                step -> "R:/output/simulation_" + maxZombies + "_" + vz + "_" + step + ".xyz",
+                App.SERIALIZE_EVERY
+        ));
+
         simulation.simulate();
     }
 
-//    private static Color getParticleColor(Particle particle) {
-//        if (particle.getCharge() == null || particle.getCharge().equals(ParticleCharge.NEGATIVE)) {
-//            return new Color(1.0, 0, 0);
-//        } else {
-//            return new Color(0, 1.0, 0);
-//        }
-//    }
+    private static Color getParticleColor(Particle particle) {
+        if (particle.getState().equals(State.HUMAN)) {
+            return new Color(0, 0, 1.0);
+        } else {
+            return new Color(1.0, 0, 0);
+        }
+    }
 }

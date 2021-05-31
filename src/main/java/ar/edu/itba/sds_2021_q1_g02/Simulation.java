@@ -13,7 +13,7 @@ public class Simulation extends Serializable {
     private final SimulationConfiguration configuration;
     private double lastHumanSpawned = Double.NEGATIVE_INFINITY;
     private int totalHumanCount;
-    private double maxTime = 20;
+    private double maxTime = 100;
 
     public Simulation(SimulationConfiguration configuration) {
         this.particles = new LinkedList<>();

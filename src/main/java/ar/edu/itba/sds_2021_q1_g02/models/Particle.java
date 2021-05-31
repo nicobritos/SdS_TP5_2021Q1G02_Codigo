@@ -58,6 +58,10 @@ public class Particle {
         return this.neighbors;
     }
 
+    public State getState() {
+        return this.state;
+    }
+
     public void move(double dt) {
         this.position = new Position(
                 this.getPosition().getX() + dt * this.getVelocity().getxSpeed(),
