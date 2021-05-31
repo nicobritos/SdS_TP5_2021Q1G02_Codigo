@@ -7,17 +7,19 @@ import java.util.Objects;
 
 public class Particle {
     private final int id;
-    private Radius radius;
+    private final Radius radius;
     private Position position;
     private Velocity velocity;
+    private State state;
     private final Set<Particle> neighbors;
 
-    public Particle(int id, Radius radius, Position position, Velocity velocity) {
+    public Particle(int id, Radius radius, Position position, Velocity velocity, State state) {
         this.id = id;
         this.radius = radius;
         this.position = position;
         this.velocity = velocity;
         this.neighbors = new HashSet<>();
+        this.state = state;
     }
 
     public int getId() {
@@ -44,12 +46,20 @@ public class Particle {
         this.velocity = velocity;
     }
 
+    public State getProperty() {
+        return this.state;
+    }
+
+    public void setProperty(State property) {
+        this.state = property;
+    }
+
     public Collection<Particle> getNeighbors() {
         return this.neighbors;
     }
 
     public Particle copy() {
-        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity);
+        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity, this.state);
 
         if (this.position != null)
             particle.setPosition(this.position.copy());
