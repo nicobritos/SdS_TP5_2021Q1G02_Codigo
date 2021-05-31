@@ -9,11 +9,11 @@ public class SimulationConfiguration {
     private final double zombieTurnTime;
     private final int maxZombies;
     private final int maxHumans;
-    private final int spawnHumansEvery;
+    private final double spawnHumansEvery;
     private final int humansPerSpawn;
     private final Bounds bounds;
 
-    public SimulationConfiguration(double dt, ParticleConfiguration particleConfiguration, double zombieTurnTime, int maxZombies, int maxHumans, int spawnHumansEvery, int humansPerSpawn, Bounds bounds) {
+    public SimulationConfiguration(double dt, ParticleConfiguration particleConfiguration, double zombieTurnTime, int maxZombies, int maxHumans, double spawnHumansEvery, int humansPerSpawn, Bounds bounds) {
         this.dt = dt;
         this.dtAsBigDecimal = BigDecimal.valueOf(dt);
         this.particleConfiguration = particleConfiguration;
@@ -49,7 +49,7 @@ public class SimulationConfiguration {
         return this.maxHumans;
     }
 
-    public int getSpawnHumansEvery() {
+    public double getSpawnHumansEvery() {
         return this.spawnHumansEvery;
     }
 

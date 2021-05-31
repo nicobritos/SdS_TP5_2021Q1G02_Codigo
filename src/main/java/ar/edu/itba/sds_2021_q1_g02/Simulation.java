@@ -35,23 +35,42 @@ public class Simulation extends Serializable {
     }
 
     private Step simulateStep(Step previousStep) {
-        for (Particle particle : this.particles) {
-
-        }
-
-        return new Step(
+        Step actualStep = new Step(
                 this.configuration.getDtAsBigDecimal(),
                 previousStep.getAbsoluteTime().add(this.configuration.getDtAsBigDecimal()),
                 previousStep.getStepNumber() + 1
         );
+
+        if (this.shouldSpawnHumans(previousStep.getAbsoluteTime().doubleValue())) {
+            this.spawnHumans(actualStep.getAbsoluteTime().doubleValue());
+            this.lastHumanSpawned = actualStep.getAbsoluteTime().doubleValue();
+        }
+
+        // Mover particulas
+        this.moveParticles(this.configuration.getDt());
+
+        return actualStep;
     }
 
     private Step calculateFirstStep() {
+        this.spawnHumans(0);
+        this.lastHumanSpawned = 0;
+
         return new Step(
                 this.configuration.getDtAsBigDecimal(),
                 BigDecimal.ZERO,
                 0
         );
+    }
+
+    private void moveParticles(double dt) {
+        for (Particle particle : this.particles) {
+            particle.move(dt);
+        }
+    }
+
+    private boolean shouldSpawnHumans(double absTime) {
+        return this.totalHumanCount < this.configuration.getMaxHumans() && absTime - this.configuration.getSpawnHumansEvery() > this.lastHumanSpawned;
     }
 
     private void spawnHumans(double absoluteTime) {
