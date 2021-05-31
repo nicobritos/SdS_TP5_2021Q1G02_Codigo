@@ -1,64 +1,44 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
+import java.math.BigDecimal;
+
 public class SimulationConfiguration {
     private final double dt;
-    private final double minRadius;
-    private final double maxRadius;
-    private final double beta;
+    private final BigDecimal dtAsBigDecimal;
+    private final ParticleConfiguration particleConfiguration;
     private final double zombieTurnTime;
-    private final double vh;
-    private final double vz;
-    private final double zombieFOV;
     private final int maxZombies;
     private final int maxHumans;
     private final int spawnHumansEvery;
     private final int humansPerSpawn;
+    private final Bounds bounds;
 
-    public SimulationConfiguration(double dt, double minRadius, double maxRadius, double beta, double zombieTurnTime, double vh, double vz, double zombieFOV, int maxZombies, int maxHumans, int spawnHumansEvery, int humansPerSpawn) {
+    public SimulationConfiguration(double dt, ParticleConfiguration particleConfiguration, double zombieTurnTime, int maxZombies, int maxHumans, int spawnHumansEvery, int humansPerSpawn, Bounds bounds) {
         this.dt = dt;
-        this.minRadius = minRadius;
-        this.maxRadius = maxRadius;
-        this.beta = beta;
+        this.dtAsBigDecimal = BigDecimal.valueOf(dt);
+        this.particleConfiguration = particleConfiguration;
         this.zombieTurnTime = zombieTurnTime;
-        this.vh = vh;
-        this.vz = vz;
-        this.zombieFOV = zombieFOV;
         this.maxZombies = maxZombies;
         this.maxHumans = maxHumans;
         this.spawnHumansEvery = spawnHumansEvery;
         this.humansPerSpawn = humansPerSpawn;
+        this.bounds = bounds;
     }
 
     public double getDt() {
         return this.dt;
     }
 
-    public double getMinRadius() {
-        return this.minRadius;
+    public BigDecimal getDtAsBigDecimal() {
+        return this.dtAsBigDecimal;
     }
 
-    public double getMaxRadius() {
-        return this.maxRadius;
-    }
-
-    public double getBeta() {
-        return this.beta;
+    public ParticleConfiguration getParticleConfiguration() {
+        return this.particleConfiguration;
     }
 
     public double getZombieTurnTime() {
         return this.zombieTurnTime;
-    }
-
-    public double getVh() {
-        return this.vh;
-    }
-
-    public double getVz() {
-        return this.vz;
-    }
-
-    public double getZombieFOV() {
-        return this.zombieFOV;
     }
 
     public int getMaxZombies() {
@@ -75,5 +55,9 @@ public class SimulationConfiguration {
 
     public int getHumansPerSpawn() {
         return this.humansPerSpawn;
+    }
+
+    public Bounds getBounds() {
+        return this.bounds;
     }
 }
