@@ -65,7 +65,7 @@ public class App {
         Simulation simulation = new Simulation(configuration);
 
         simulation.addSerializer(new OvitoSerializer(
-                (systemParticles, step) -> systemParticles.size() + 2 + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
+                (systemParticles, step) -> systemParticles.size() + "\n" + "Properties=id:R:1:radius:R:1:pos:R" +
                         ":2:Velocity:R:2:color:R:3",
                 (particle, step) -> {
                     Color color = getParticleColor(particle);
@@ -90,10 +90,17 @@ public class App {
     }
 
     private static Color getParticleColor(Particle particle) {
-        if (particle.getId() < 0)
-            return new Color(0.0001, 0.0001, 0.0001);
+        if (particle.getId() < 0) {
+            if (particle.getType().equals(Type.CORNER)) {
+                return new Color(0.0001, 0.0001, 0.0001);
+            } else if (particle.getType().equals(Type.ZOMBIE_DOOR)) {
+                return new Color(1, 0, 1);
+            } else if (particle.getType().equals(Type.HUMAN_DOOR)) {
+                return new Color(0, 1, 0);
+            }
+        }
 
-        if (particle.getState().equals(State.HUMAN)) {
+        if (particle.getType().equals(Type.HUMAN)) {
             return new Color(0, 0, 1.0);
         } else {
             return new Color(1.0, 0, 0);

@@ -14,6 +14,7 @@ public class Simulation extends Serializable {
     private final SimulationConfiguration configuration;
     private double lastHumanSpawned = Double.NEGATIVE_INFINITY;
     private int totalHumanCount;
+    private int totalCount;
     private double maxTime = 100;
 
     public Simulation(SimulationConfiguration configuration) {
@@ -94,7 +95,7 @@ public class Simulation extends Serializable {
             );
 
             this.particles.add(new Particle(
-                    this.particles.size() + 1,
+                    this.totalCount + 1,
                     radius,
                     startPosition,
                     Contractile.calculateVelocity(
@@ -105,10 +106,11 @@ public class Simulation extends Serializable {
                             this.configuration.getParticleConfiguration().getBeta(),
                             false
                     ),
-                    State.HUMAN
+                    Type.HUMAN
             ));
 
             this.totalHumanCount++;
+            this.totalCount++;
         }
 
         this.lastHumanSpawned = absoluteTime;
@@ -159,17 +161,12 @@ public class Simulation extends Serializable {
     }
 
     private boolean isPositionTaken(double x, double y) {
-        boolean positionTaken = false;
         for (Particle particle : this.particles) {
-            if (!Simulation.isParticleIn(particle, x, y)) {
-                if (positionTaken)
-                    positionTaken = false;
-            } else {
-                if (!positionTaken)
-                    positionTaken = true;
+            if (Simulation.isParticleIn(particle, x, y)) {
+                return true;
             }
         }
-        return positionTaken;
+        return false;
     }
 
     private boolean hasReachedDoor(Particle particle) {
@@ -180,15 +177,15 @@ public class Simulation extends Serializable {
     }
 
     private static boolean isHuman(Particle particle) {
-        return particle.getState().equals(State.HUMAN);
+        return particle.getType().equals(Type.HUMAN);
     }
 
     private static boolean isParticleIn(Particle particle, double x, double y) {
         return (
                 particle.getPosition().getX() - particle.getRadius().getCurrentRadius() <= x
                 && x <= particle.getPosition().getX() + particle.getRadius().getCurrentRadius()
-        ) || (
-                particle.getPosition().getY() + particle.getRadius().getCurrentRadius() <= y
+        ) && (
+                particle.getPosition().getY() - particle.getRadius().getCurrentRadius() <= y
                 && y <= particle.getPosition().getY() + particle.getRadius().getCurrentRadius()
         );
     }

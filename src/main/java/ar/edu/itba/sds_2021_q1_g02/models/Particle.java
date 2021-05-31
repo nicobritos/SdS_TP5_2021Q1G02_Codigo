@@ -10,16 +10,16 @@ public class Particle {
     private final Radius radius;
     private Position position;
     private Velocity velocity;
-    private State state;
+    private Type type;
     private final Set<Particle> neighbors;
 
-    public Particle(int id, Radius radius, Position position, Velocity velocity, State state) {
+    public Particle(int id, Radius radius, Position position, Velocity velocity, Type type) {
         this.id = id;
         this.radius = radius;
         this.position = position;
         this.velocity = velocity;
         this.neighbors = new HashSet<>();
-        this.state = state;
+        this.type = type;
     }
 
     public int getId() {
@@ -46,20 +46,20 @@ public class Particle {
         this.velocity = velocity;
     }
 
-    public State getProperty() {
-        return this.state;
+    public Type getProperty() {
+        return this.type;
     }
 
-    public void setProperty(State property) {
-        this.state = property;
+    public void setProperty(Type property) {
+        this.type = property;
     }
 
     public Collection<Particle> getNeighbors() {
         return this.neighbors;
     }
 
-    public State getState() {
-        return this.state;
+    public Type getType() {
+        return this.type;
     }
 
     public void move(double dt) {
@@ -70,7 +70,7 @@ public class Particle {
     }
 
     public Particle copy() {
-        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity, this.state);
+        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity, this.type);
 
         if (this.position != null)
             particle.setPosition(this.position.copy());
