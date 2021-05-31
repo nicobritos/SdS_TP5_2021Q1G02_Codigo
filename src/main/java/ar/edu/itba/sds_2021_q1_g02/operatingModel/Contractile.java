@@ -4,7 +4,10 @@ import ar.edu.itba.sds_2021_q1_g02.models.Radius;
 
 import java.util.List;
 
-public class TemporalEvolution {
+public final class Contractile {
+    private Contractile() {
+    }
+
     public static double calculatePosition(double position, double velocity, double dt) {
         return position + velocity * dt;
     }
@@ -17,11 +20,9 @@ public class TemporalEvolution {
 
         final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
         return calculateDesiredVelocity(position, targetPositions.get(0), velocityMagnitude);
-
     }
 
     public static double calculateRadius(Radius radius, double dt, double tau, boolean isInContact) {
-
         if (isInContact) {
             return radius.getMinRadius();
         }

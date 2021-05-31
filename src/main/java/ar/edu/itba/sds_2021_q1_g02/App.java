@@ -1,7 +1,70 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
-import ar.edu.itba.sds_2021_q1_g02.models.Radius;
+import ar.edu.itba.sds_2021_q1_g02.models.SimulationConfiguration;
+import ar.edu.itba.sds_2021_q1_g02.serializer.*;
 
 public class App {
+    private static final double DT = 0.01; // Paper dice 0.05
+    private static final double MIN_RADIUS = 0.1; // Paper set of parameters 2
+    private static final double MAX_RADIUS = 0.37;
+    private static final double BETA = 0.9;
+    private static final double ZOMBIES_FOV = 5; // Metros
+    private static final double ZOMBIE_TURN_TIME = 7; // Segundos
+    private static final int SPAWN_HUMANS_EVERY = 9;
+    private static final int HUMANS_PER_SPAWN = 20;
+    private static final int MAX_HUMANS = 100;
+    private static final double VH = 1.6;
 
+    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
+    private static final double[] S_C_VZS = {0.4, 0.8, 1.2, 1.6, 2, 2.4};
+
+    private static final double SERIALIZE_EVERY = 0.1;
+    private static final SimulationSerializer SIMULATION_SERIALIZER = new SimulationSerializer(
+            step -> "R:/output/simulation_1.tsv",
+            App.SERIALIZE_EVERY
+    );
+
+    public static void main(String[] args) {
+        System.out.println("------------- 3.b -------------");
+        App.simulationA();
+        System.out.println("--------------------------------------");
+
+//        System.out.println("------------- 3.b -------------");
+//        App.radiationSimulation();
+//        System.out.println("--------------------------------------");
+    }
+
+    private static void simulationA() {
+        for (int i = 0; i < App.S_B_ZOMBIES.length; i++) {
+            App.simulate(App.S_B_ZOMBIES[i], 1);
+        }
+    }
+
+    private static void simulate(int zombies, double vz) {
+        SimulationConfiguration configuration = new SimulationConfiguration(
+                App.DT,
+                App.MIN_RADIUS,
+                App.MAX_RADIUS,
+                App.BETA,
+                App.ZOMBIE_TURN_TIME,
+                App.VH,
+                vz,
+                App.ZOMBIES_FOV,
+                zombies,
+                App.MAX_HUMANS,
+                App.SPAWN_HUMANS_EVERY,
+                App.HUMANS_PER_SPAWN
+        );
+
+        Simulation simulation = new Simulation(configuration);
+        simulation.simulate();
+    }
+
+//    private static Color getParticleColor(Particle particle) {
+//        if (particle.getCharge() == null || particle.getCharge().equals(ParticleCharge.NEGATIVE)) {
+//            return new Color(1.0, 0, 0);
+//        } else {
+//            return new Color(0, 1.0, 0);
+//        }
+//    }
 }
