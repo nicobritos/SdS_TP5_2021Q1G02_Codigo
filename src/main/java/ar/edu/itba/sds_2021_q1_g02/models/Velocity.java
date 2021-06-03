@@ -2,6 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 
 public class Velocity {
+    public static final Velocity ZERO = new Velocity(0, 0);
     private final double xSpeed;
     private final double ySpeed;
 

@@ -6,6 +6,7 @@ import ar.edu.itba.sds_2021_q1_g02.serializer.Serializable;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Simulation extends Serializable {
@@ -13,7 +14,8 @@ public class Simulation extends Serializable {
     private final SimulationConfiguration configuration;
     private double lastHumanSpawned = Double.NEGATIVE_INFINITY;
     private int totalHumanCount;
-    private double maxTime = 20;
+    private int totalCount;
+    private double maxTime = 100;
 
     public Simulation(SimulationConfiguration configuration) {
         this.particles = new LinkedList<>();
@@ -64,8 +66,17 @@ public class Simulation extends Serializable {
     }
 
     private void moveParticles(double dt) {
-        for (Particle particle : this.particles) {
-            particle.move(dt);
+        Iterator<Particle> iterator = this.particles.iterator();
+        while (iterator.hasNext()) {
+            Particle particle = iterator.next();
+            particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
+            particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5, false));
+            particle.setVelocity(Contractile.calculateVelocity(particle.getPosition(),  Collections.emptyList(),
+                    this.getEndPosition(), this.configuration.getParticleConfiguration().getVh(),
+                    particle.getRadius(), this.configuration.getParticleConfiguration().getBeta(), false));
+            if (this.hasReachedDoor(particle)) {
+                iterator.remove();
+            }
         }
     }
 
@@ -88,7 +99,7 @@ public class Simulation extends Serializable {
             );
 
             this.particles.add(new Particle(
-                    this.particles.size() + 1,
+                    this.totalCount + 1,
                     radius,
                     startPosition,
                     Contractile.calculateVelocity(
@@ -100,46 +111,49 @@ public class Simulation extends Serializable {
                             this.configuration.getParticleConfiguration().getBeta(),
                             false
                     ),
-                    State.HUMAN
+                    Type.HUMAN
             ));
 
             this.totalHumanCount++;
+            this.totalCount++;
         }
 
         this.lastHumanSpawned = absoluteTime;
     }
 
     private Position getHumanStartingPosition() {
-        double minX = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
+        double minY = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
                 + this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxX = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
+        double maxY = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
                 - this.configuration.getParticleConfiguration().getMaxRadius();
+        double maxX = this.configuration.getBounds().getWidth() - this.configuration.getBounds().getZombieBoundWidth();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
-        double x = minX;
-        double y = this.configuration.getParticleConfiguration().getMaxRadius();
-        boolean positionTaken = true;
-        do {
-            for (Particle particle : this.particles) {
-                if (!Simulation.isParticleIn(particle, x, y)) {
-                    positionTaken = false;
-                    break;
-                }
-            }
+        double x = this.configuration.getParticleConfiguration().getMaxRadius();
+        double y = minY;
+
+        boolean positionTaken = !this.particles.isEmpty();
+        while (positionTaken) {
+            positionTaken = this.isPositionTaken(x, y);
             if (!positionTaken)
                 break;
 
-            if (x + diameter >= maxX) {
-                x = minX;
-                y += diameter;
+            if (y + diameter >= maxY) {
+                if (minY - diameter > 0) {
+                    y = minY -= diameter;
+                    maxY += diameter;
+                } else {
+                    y = minY;
+                }
+                x += diameter;
 
-                if (y >= this.configuration.getBounds().getWidth()) {
+                if (x >= maxX) {
                     throw new IllegalStateException("No hay mas espacio para meter humanos!");
                 }
             } else {
-                x += diameter;
+                y += diameter;
             }
-        } while (positionTaken);
+        }
 
         return new Position(x, y);
     }
@@ -151,13 +165,27 @@ public class Simulation extends Serializable {
         );
     }
 
+    private boolean isPositionTaken(double x, double y) {
+        for (Particle particle : this.particles) {
+            if (Simulation.isParticleIn(particle, x, y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasReachedDoor(Particle particle) {
+        return Simulation.isHuman(particle)
+                && particle.getPosition().getX() >= this.configuration.getBounds().getWidth()
+                && particle.getPosition().getY() >= (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
+                && particle.getPosition().getY() <= (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2;
+    }
+
+    private static boolean isHuman(Particle particle) {
+        return particle.getType().equals(Type.HUMAN);
+    }
+
     private static boolean isParticleIn(Particle particle, double x, double y) {
-        return (
-                particle.getPosition().getX() - particle.getRadius().getCurrentRadius() <= x
-                        && x <= particle.getPosition().getX() + particle.getRadius().getCurrentRadius()
-        ) || (
-                particle.getPosition().getY() + particle.getRadius().getCurrentRadius() <= y
-                        && y <= particle.getPosition().getY() + particle.getRadius().getCurrentRadius()
-        );
+        return (particle.getPosition().getX() - particle.getRadius().getCurrentRadius() <= x && x <= particle.getPosition().getX() + particle.getRadius().getCurrentRadius()) && (particle.getPosition().getY() - particle.getRadius().getCurrentRadius() <= y && y <= particle.getPosition().getY() + particle.getRadius().getCurrentRadius());
     }
 }

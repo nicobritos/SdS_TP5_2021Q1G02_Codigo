@@ -21,7 +21,7 @@ public class Bounds {
         return this.width;
     }
 
-    public double getZombieSize() {
+    public double getZombieBoundWidth() {
         return this.zombieSize;
     }
 
