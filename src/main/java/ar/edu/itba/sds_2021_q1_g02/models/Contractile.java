@@ -66,7 +66,7 @@ public final class Contractile {
 
     private static Vector2D calculateAvoidanceTargetDirection(Position position, List<Position> othersPosition,
                                                               Position targetPosition) {
-        Vector2D avoidanceTarget = new Vector2D(targetPosition.getX(), targetPosition.getY());
+        Vector2D avoidanceTarget = Vector2DUtils.calculateVectorFromTwoPositions(targetPosition, position);
         for (Position otherPosition : othersPosition) {
             final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, otherPosition);
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, otherPosition);
