@@ -35,32 +35,27 @@ public class Position {
     }
 
     public Position add(Position offset) {
-        return new Position(
-                this.x + offset.x,
-                this.y + offset.y
-        );
+        return new Position(this.x + offset.x, this.y + offset.y);
+    }
+
+    public Position add(Vector2D offset) {
+        return new Position(this.x + offset.getX(), this.y + offset.getY());
+    }
+
+    public Position multiply(double d) {
+        return new Position(this.x * d, this.y * d);
+    }
+
+    public double distanceTo(Position other) {
+        return Math.sqrt(Math.pow(this.getX() - other.getX(), 2) + Math.pow(this.getY() - other.getY(), 2));
     }
 
     public Position copy() {
         return new Position(this.x, this.y);
     }
 
-    public double distanceTo(Position other) {
-        return Math.sqrt(
-                Math.pow(this.getX() - other.getX(), 2)
-                        + Math.pow(this.getY() - other.getY(), 2)
-        );
-    }
-
     @Override
     public String toString() {
         return String.format("(%.5f, %.5f)", this.x, this.y);
-    }
-
-    public Position multiply(double d) {
-        return new Position(
-                this.x * d,
-                this.y * d
-        );
     }
 }

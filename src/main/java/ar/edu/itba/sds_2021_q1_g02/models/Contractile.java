@@ -1,5 +1,8 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
+import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
+import javafx.geometry.Pos;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,33 +10,21 @@ public final class Contractile {
     private Contractile() {
     }
 
-    public static Position calculatePosition(Position position, Velocity velocity, double dt) {
-        return new Position(
-                Contractile.calculatePosition(position.getX(), velocity.getxSpeed(), dt),
-                Contractile.calculatePosition(position.getY(), velocity.getySpeed(), dt)
-        );
+    public static Velocity calculateVelocity(Position position, List<Position> othersPosition,
+                                             Position targetPosition, double maxVelocity, Radius radius, double beta
+            , boolean isInContact) {
+        if (isInContact) {
+            return calculateEscapeVelocity(position, othersPosition, maxVelocity);
+        }
+
+        final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
+        return calculateDesiredVelocity(position, othersPosition, targetPosition, velocityMagnitude);
     }
 
-    public static Velocity calculateVelocity(Position position, List<Position> targetPositions, double maxVelocity,
-                                            Radius radius, double beta, boolean isInContact) {
-        return new Velocity(
-                Contractile.calculateVelocity(
-                        position.getX(),
-                        targetPositions.stream().map(Position::getX).collect(Collectors.toList()),
-                        maxVelocity,
-                        radius,
-                        beta,
-                        isInContact
-                ),
-                Contractile.calculateVelocity(
-                        position.getY(),
-                        targetPositions.stream().map(Position::getY).collect(Collectors.toList()),
-                        maxVelocity,
-                        radius,
-                        beta,
-                        isInContact
-                )
-        );
+    public static Position calculatePosition(Position position, Velocity velocity, double dt) {
+        final double x = position.getX() + velocity.getxSpeed() * dt;
+        final double y = position.getY() + velocity.getySpeed() * dt;
+        return new Position(x, y);
     }
 
     public static double calculateRadius(Radius radius, double dt, double tau, boolean isInContact) {
@@ -52,34 +43,39 @@ public final class Contractile {
         return minRadius / (2 * Math.max(maxVelocity, escapeVelocity));
     }
 
-    private static double calculateVelocity(double position, List<Double> targetPositions, double maxVelocity,
-                                            Radius radius, double beta, boolean isInContact) {
-        if (isInContact) {
-            return calculateEscapeVelocity(position, targetPositions, maxVelocity);
+    private static Velocity calculateDesiredVelocity(Position position, List<Position> othersPosition,
+                                                     Position targetPosition, double velocityMagnitude) {
+        final Vector2D avoidanceTargetDirection = calculateAvoidanceTargetDirection(position, othersPosition,
+                targetPosition);
+        return new Velocity(velocityMagnitude * avoidanceTargetDirection.getX(),
+                velocityMagnitude * avoidanceTargetDirection.getY());
+    }
+
+    private static Velocity calculateEscapeVelocity(Position position, List<Position> othersPosition,
+                                                    double velocityMagnitude) {
+        Vector2D sumEij = new Vector2D(0, 0);
+        for (Position otherPosition : othersPosition) {
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, otherPosition);
+            final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
+            sumEij.add(normalizedEij);
         }
+        Vector2D sumEijNormalized = Vector2DUtils.calculateNormalizedVector(sumEij);
+        return new Velocity(velocityMagnitude * sumEijNormalized.getX(), velocityMagnitude * sumEijNormalized.getY());
 
-        final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
-        return calculateDesiredVelocity(position, targetPositions.get(0), velocityMagnitude);
     }
 
-    public static double calculatePosition(double position, double velocity, double dt) {
-        return position + velocity * dt;
-    }
-
-    private static double calculateDesiredVelocity(double position, double targetPosition, double velocityMagnitude) {
-        double target = calculateTarget(position, targetPosition);
-        return velocityMagnitude * target;
-    }
-
-    private static double calculateEscapeVelocity(double position, List<Double> targetPositions,
-                                                  double velocityMagnitude) {
-        double targetSum = targetPositions.stream().mapToDouble(targetPosition -> calculateTarget(position,
-                targetPosition)).sum();
-        return velocityMagnitude * (targetSum / Math.abs(targetSum));
-    }
-
-    private static double calculateTarget(double position, double targetPosition) {
-        return (targetPosition - position) / Math.abs(targetPosition - position);
+    private static Vector2D calculateAvoidanceTargetDirection(Position position, List<Position> othersPosition,
+                                                              Position targetPosition) {
+        Vector2D avoidanceTarget = new Vector2D(targetPosition.getX(), targetPosition.getY());
+        for (Position otherPosition : othersPosition) {
+            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, otherPosition);
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, otherPosition);
+            final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
+            final double dij = position.distanceTo(otherPosition);
+            final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
+            avoidanceTarget = avoidanceTarget.add(repVec);
+        }
+        return Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
     }
 
     private static double calculateVelocityMagnitude(double maxVelocity, Radius radius, double beta) {
@@ -91,4 +87,14 @@ public final class Contractile {
         double radiusDivision = (currentRadius - minRadius) / (maxRadius - minRadius);
         return maxVelocity * Math.pow(radiusDivision, beta);
     }
+
+    public static Vector2D calculateRepulsionVector(Vector2D eij, double distance, double angle, double ap,
+                                                    double bp) {
+        final double r_x = eij.getX() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(angle);
+        final double r_y = eij.getY() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(angle);
+
+        return new Vector2D(r_x, r_y);
+    }
+
+
 }

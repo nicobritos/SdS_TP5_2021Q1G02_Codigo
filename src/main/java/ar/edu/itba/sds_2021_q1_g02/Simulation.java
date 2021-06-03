@@ -93,7 +93,8 @@ public class Simulation extends Serializable {
                     startPosition,
                     Contractile.calculateVelocity(
                             startPosition,
-                            Collections.singletonList(this.getEndPosition()),
+                            Collections.emptyList(),
+                            this.getEndPosition(),
                             this.configuration.getParticleConfiguration().getVh(),
                             radius,
                             this.configuration.getParticleConfiguration().getBeta(),
@@ -153,10 +154,10 @@ public class Simulation extends Serializable {
     private static boolean isParticleIn(Particle particle, double x, double y) {
         return (
                 particle.getPosition().getX() - particle.getRadius().getCurrentRadius() <= x
-                && x <= particle.getPosition().getX() + particle.getRadius().getCurrentRadius()
+                        && x <= particle.getPosition().getX() + particle.getRadius().getCurrentRadius()
         ) || (
                 particle.getPosition().getY() + particle.getRadius().getCurrentRadius() <= y
-                && y <= particle.getPosition().getY() + particle.getRadius().getCurrentRadius()
+                        && y <= particle.getPosition().getY() + particle.getRadius().getCurrentRadius()
         );
     }
 }

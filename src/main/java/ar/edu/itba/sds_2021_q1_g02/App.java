@@ -1,9 +1,10 @@
 package ar.edu.itba.sds_2021_q1_g02;
 
-import ar.edu.itba.sds_2021_q1_g02.models.Bounds;
-import ar.edu.itba.sds_2021_q1_g02.models.ParticleConfiguration;
-import ar.edu.itba.sds_2021_q1_g02.models.SimulationConfiguration;
+import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.*;
+import javafx.geometry.Pos;
+
+import java.awt.*;
 
 public class App {
     private static final Bounds BOUNDS = new Bounds(
@@ -80,3 +81,11 @@ public class App {
 //        }
 //    }
 }
+
+//public class App {
+//    public static void main(String[] args) {
+//        final Position positionA = new Position(0, 0);
+//        final Position positionB = new Position(0.01, 0.01);
+//        final Position positionC = new Position(1,0);
+//    }
+//}
