@@ -36,4 +36,9 @@ public class Vector2D {
     public double distanceTo(Vector2D other) {
         return Math.sqrt(Math.pow(this.getX() - other.getX(), 2) + Math.pow(this.getY() - other.getY(), 2));
     }
+
+    @Override
+    public String toString() {
+        return String.format("(%.5f, %.5f)", this.x, this.y);
+    }
 }
