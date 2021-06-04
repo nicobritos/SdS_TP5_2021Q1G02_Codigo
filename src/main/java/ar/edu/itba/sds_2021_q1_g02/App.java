@@ -1,4 +1,4 @@
-package ar.edu.itba.sds_2021_q1_g02;
+package ar.edu.itba.sds_2021_q1_g02;//package ar.edu.itba.sds_2021_q1_g02;
 
 import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.OvitoSerializer;
@@ -28,7 +28,7 @@ public class App {
 
     private static final double SERIALIZE_EVERY = 0.5;
     private static final SimulationSerializer SIMULATION_SERIALIZER = new SimulationSerializer(
-            step -> "R:/output/simulation_1.tsv",
+            step -> "output/simulation_1.tsv",
             App.SERIALIZE_EVERY
     );
 
@@ -82,7 +82,7 @@ public class App {
                             color.getGreen() + "\t" +
                             color.getBlue();
                 },
-                step -> "R:/output/simulation_" + maxZombies + "_" + vz + "_" + step + ".xyz",
+                step -> "output/simulation_" + maxZombies + "_" + vz + "_" + step + ".xyz",
                 configuration,
                 App.SERIALIZE_EVERY
         ));
@@ -109,10 +109,23 @@ public class App {
     }
 }
 
+//import ar.edu.itba.sds_2021_q1_g02.models.Position;
+//
+//import java.util.ArrayList;
+//import java.util.List;
+//
 //public class App {
 //    public static void main(String[] args) {
 //        final Position positionA = new Position(0, 0);
-//        final Position positionB = new Position(0.01, 0.01);
-//        final Position positionC = new Position(1,0);
+//        final Position positionB = new Position(1, 0);
+//        final Position positionC = new Position(0,1);
+//        final Position positionD = new Position(0,-1);
+//        final Position positionE = new Position(-1,0);
+//        final Position positionF = new Position(0.5,0.5);
+//
+//        List<Position> particles = new ArrayList<>();
+//        particles.add(positionC);
+//        particles.add(positionC);
+//
 //    }
 //}
