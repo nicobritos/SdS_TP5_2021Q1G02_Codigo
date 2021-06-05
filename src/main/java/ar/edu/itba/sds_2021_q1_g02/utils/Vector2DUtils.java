@@ -13,8 +13,14 @@ public class Vector2DUtils {
         double div = 2 * dva * dvb;
         if (div == 0)
             div = 1;
-        final double angle = Math.acos((Math.pow(dva, 2) + Math.pow(dvb, 2) - Math.pow(dab, 2)) / div);
-        return angle * 180 / Math.PI;
+
+        double cosValue = (Math.pow(dva, 2) + Math.pow(dvb, 2) - Math.pow(dab, 2)) / div;
+        if (cosValue > 1)
+            cosValue = 1;
+        else if (cosValue < -1)
+            cosValue = -1;
+
+        return Math.acos(cosValue) * 180 / Math.PI;
     }
 
     public static Vector2D calculateVectorFromTwoPositions(Position positionA, Position positionB) {
