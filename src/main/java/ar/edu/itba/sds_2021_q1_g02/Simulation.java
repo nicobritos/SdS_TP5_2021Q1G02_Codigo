@@ -2,6 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02;
 
 import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.Serializable;
+import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -97,14 +98,14 @@ public class Simulation extends Serializable {
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
             // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
-            Set<Particle> neighbors = this.computeNeighbors(this.allParticles, particle);
+            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
             particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5, isInContact));
             particle.setVelocity(Contractile.calculateVelocity(
                     particle.getPosition(),
-                    neighbors.stream().map(Particle::getPosition).collect(Collectors.toList()),
+                    neighbors,
                     this.getEndPosition(),
                     this.configuration.getParticleConfiguration().getVh(),
                     particle.getRadius(),
@@ -122,15 +123,16 @@ public class Simulation extends Serializable {
         Iterator<Particle> iterator = this.zombieParticles.iterator();
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
-            Set<Particle> neighbors = this.computeNeighbors(this.zombieParticles, particle);
+            final Position humanTargetPosition = this.getNearestHumanPosition(particle);
+            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), humanTargetPosition, this.zombieParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
             particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5, isInContact));
             particle.setVelocity(Contractile.calculateVelocity(
                     particle.getPosition(),
-                    neighbors.stream().map(Particle::getPosition).collect(Collectors.toList()),
-                    this.getNearestHumanPosition(particle),
+                    neighbors,
+                    humanTargetPosition,
                     this.configuration.getParticleConfiguration().getVh(),
                     particle.getRadius(),
                     this.configuration.getParticleConfiguration().getBeta(),
@@ -281,8 +283,24 @@ public class Simulation extends Serializable {
         return neighbors.stream().anyMatch(particle::isInContact);
     }
 
-    private Set<Particle> computeNeighbors(Collection<Particle> particles, Particle particle) {
-        return particles.stream().filter(p -> !p.equals(particle)).collect(Collectors.toSet());
+    public static List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
+        final double m_y = targetPosition.getY() - position.getY();
+        final double m_x = targetPosition.getX() - position.getX();
+        final Double m = m_y / m_x;
+        final Double p_m = -1 / m;
+        final Double b = position.getY() - p_m * position.getX();
+        List<Particle> validParticles = new ArrayList<>();
+        for (Particle particle : particles) {
+            final Position pos = particle.getPosition();
+            if (p_m.isInfinite()) {
+                // Es una recta vertical
+                if (pos.getX() >= position.getX()) validParticles.add(particle);
+            } else {
+                final double y = p_m * pos.getX() + b;
+                if (pos.getY() >= y) validParticles.add(particle);
+            }
+        }
+        return validParticles;
     }
 
     private Position getNearestHumanPosition(Particle zombie) {

@@ -10,15 +10,13 @@ public final class Contractile {
     private Contractile() {
     }
 
-    public static Velocity calculateVelocity(Position position, List<Position> othersPosition,
-                                             Position targetPosition, double maxVelocity, Radius radius, double beta
-            , boolean isInContact) {
+    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
         if (isInContact) {
-            return calculateEscapeVelocity(position, othersPosition, maxVelocity);
+            return calculateEscapeVelocity(position, otherParticles, maxVelocity);
         }
 
         final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
-        return calculateDesiredVelocity(position, othersPosition, targetPosition, velocityMagnitude);
+        return calculateDesiredVelocity(position, radius.getCurrentRadius(), otherParticles, targetPosition, velocityMagnitude);
     }
 
     public static Position calculatePosition(Position position, Velocity velocity, double dt) {
@@ -43,19 +41,19 @@ public final class Contractile {
         return minRadius / (2 * Math.max(maxVelocity, escapeVelocity));
     }
 
-    private static Velocity calculateDesiredVelocity(Position position, List<Position> othersPosition,
+    private static Velocity calculateDesiredVelocity(Position position, double radius, List<Particle> othersPosition,
                                                      Position targetPosition, double velocityMagnitude) {
-        final Vector2D avoidanceTargetDirection = calculateAvoidanceTargetDirection(position, othersPosition,
+        final Vector2D avoidanceTargetDirection = calculateAvoidanceTargetDirection(position, radius, othersPosition,
                 targetPosition);
         return new Velocity(velocityMagnitude * avoidanceTargetDirection.getX(),
                 velocityMagnitude * avoidanceTargetDirection.getY());
     }
 
-    private static Velocity calculateEscapeVelocity(Position position, List<Position> othersPosition,
+    private static Velocity calculateEscapeVelocity(Position position, List<Particle> otherParticles,
                                                     double velocityMagnitude) {
         Vector2D sumEij = new Vector2D(0, 0);
-        for (Position otherPosition : othersPosition) {
-            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, otherPosition);
+        for (Particle particle : otherParticles) {
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
             sumEij.add(normalizedEij);
         }
@@ -64,15 +62,15 @@ public final class Contractile {
 
     }
 
-    private static Vector2D calculateAvoidanceTargetDirection(Position position, List<Position> othersPosition,
+    private static Vector2D calculateAvoidanceTargetDirection(Position position, double radius, List<Particle> otherParticles,
                                                               Position targetPosition) {
         Vector2D avoidanceTarget = Vector2DUtils.calculateVectorFromTwoPositions(targetPosition, position);
         avoidanceTarget = Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
-        for (Position otherPosition : othersPosition) {
-            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, otherPosition);
-            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, otherPosition);
+        for (Particle particle : otherParticles) {
+            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, particle.getPosition());
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
-            final double dij = position.distanceTo(otherPosition);
+            final double dij = position.distanceTo(particle.getPosition()) - radius - particle.getRadius().getCurrentRadius();
             final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
             avoidanceTarget = avoidanceTarget.add(repVec);
         }

@@ -23,7 +23,8 @@ public class App {
     private static final int MAX_HUMANS = 100;
     private static final double VH = 1.6;
 
-    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
+    private static final int[] S_B_ZOMBIES = {10};
+    //    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
     private static final double[] S_C_VZS = {0.4, 0.8, 1.2, 1.6, 2, 2.4};
 
     private static final double SERIALIZE_EVERY = 0.5;
@@ -110,6 +111,7 @@ public class App {
 }
 
 //import ar.edu.itba.sds_2021_q1_g02.models.Position;
+//import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 //
 //import java.util.ArrayList;
 //import java.util.List;
@@ -117,15 +119,22 @@ public class App {
 //public class App {
 //    public static void main(String[] args) {
 //        final Position positionA = new Position(0, 0);
-//        final Position positionB = new Position(1, 0);
+//        final Position positionB = new Position(0.35, 0.25);
 //        final Position positionC = new Position(0,1);
 //        final Position positionD = new Position(0,-1);
 //        final Position positionE = new Position(-1,0);
 //        final Position positionF = new Position(0.5,0.5);
+//        final Position positionG = new Position(0.147,-0.2);
 //
 //        List<Position> particles = new ArrayList<>();
 //        particles.add(positionC);
-//        particles.add(positionC);
+//        particles.add(positionD);
+//        particles.add(positionE);
+//        particles.add(positionF);
+//        particles.add(positionG);
+//
+//        List<Position> posi = Vector2DUtils.computeNeighbors(positionA,positionB, particles);
+//        System.out.println(posi);
 //
 //    }
 //}
