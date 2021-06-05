@@ -64,7 +64,10 @@ public class Particle {
     }
 
     public double distanceTo(Particle other) {
-        return Math.abs(this.rawDistanceTo(other));
+        double distance = this.rawDistanceTo(other);
+        if (distance <= 0)
+            return 0;
+        return distance;
     }
 
     public boolean isInContact(Particle other) {
