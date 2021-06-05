@@ -127,9 +127,7 @@ public class Simulation extends Serializable {
     }
 
     private void moveZombies(double dt) {
-        Iterator<Particle> iterator = this.zombieParticles.iterator();
-        while (iterator.hasNext()) {
-            Particle particle = iterator.next();
+        for (Particle particle : this.zombieParticles) {
             // Movemos particula
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
 
