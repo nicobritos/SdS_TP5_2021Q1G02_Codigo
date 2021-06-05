@@ -55,7 +55,7 @@ public final class Contractile {
         for (Particle particle : otherParticles) {
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
-            sumEij.add(normalizedEij);
+            sumEij = sumEij.add(normalizedEij);
         }
         Vector2D sumEijNormalized = Vector2DUtils.calculateNormalizedVector(sumEij);
         return new Velocity(velocityMagnitude * sumEijNormalized.getX(), velocityMagnitude * sumEijNormalized.getY());
