@@ -98,7 +98,7 @@ public class Simulation extends Serializable {
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
             // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
-            List<Particle> neighbors = Simulation.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
+            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
@@ -124,7 +124,7 @@ public class Simulation extends Serializable {
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
             final Position humanTargetPosition = this.getNearestHumanPosition(particle);
-            List<Particle> neighbors = Simulation.computeNeighbors(particle.getPosition(), humanTargetPosition, this.zombieParticles);
+            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), humanTargetPosition, this.zombieParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
