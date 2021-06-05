@@ -2,11 +2,9 @@ package ar.edu.itba.sds_2021_q1_g02;
 
 import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.Serializable;
-import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
     private final Collection<Particle> zombieParticles;
@@ -137,14 +135,16 @@ public class Simulation extends Serializable {
     }
 
     private void putHumanVelocity(Particle particle, double dt) {
-        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
+        Position exitDoorPosition = this.getHumanExitDoorPosition(particle.getPosition(), particle.getRadius().getMaxRadius());
+
+        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), exitDoorPosition, this.allParticles);
         boolean isInContact = this.isInContact(neighbors, particle);
 
         particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5, isInContact));
         particle.setVelocity(Contractile.calculateVelocity(
                 particle.getPosition(),
                 neighbors,
-                this.getEndPosition(),
+                exitDoorPosition,
                 this.configuration.getParticleConfiguration().getVh(),
                 particle.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
@@ -187,10 +187,8 @@ public class Simulation extends Serializable {
     }
 
     private Position getHumanStartingPosition() {
-        double minY = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
-                + this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxY = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
-                - this.configuration.getParticleConfiguration().getMaxRadius();
+        double minY = this.configuration.getBounds().getDoorsStartY() + this.configuration.getParticleConfiguration().getMaxRadius();
+        double maxY = this.configuration.getBounds().getDoorsEndY() - this.configuration.getParticleConfiguration().getMaxRadius();
         double maxX = this.configuration.getBounds().getWidth() - this.configuration.getBounds().getZombieBoundWidth();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
@@ -236,10 +234,8 @@ public class Simulation extends Serializable {
     }
 
     private List<Position> getZombieStartingPositions() {
-        double minY = (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
-                + this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxY = (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
-                - this.configuration.getParticleConfiguration().getMaxRadius();
+        double minY = this.configuration.getBounds().getDoorsStartY() + this.configuration.getParticleConfiguration().getMaxRadius();
+        double maxY = this.configuration.getBounds().getDoorsEndY() - this.configuration.getParticleConfiguration().getMaxRadius();
         double maxX = this.configuration.getBounds().getWidth();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
@@ -277,7 +273,7 @@ public class Simulation extends Serializable {
                 Contractile.calculateVelocity(
                         position,
                         Collections.emptyList(),
-                        type.equals(Type.HUMAN) ? this.getEndPosition() : position,
+                        type.equals(Type.HUMAN) ? this.getHumanExitDoorPosition(position, radius.getMaxRadius()) : position,
                         this.configuration.getParticleConfiguration().getVh(),
                         radius,
                         this.configuration.getParticleConfiguration().getBeta(),
@@ -291,10 +287,21 @@ public class Simulation extends Serializable {
         return particle;
     }
 
-    private Position getEndPosition() {
+    private Position getHumanExitDoorPosition(Position humanPosition, double maxRadius) {
+        double doorStartY = this.configuration.getBounds().getDoorsStartY() + maxRadius;
+        double doorEndY = this.configuration.getBounds().getDoorsEndY() - maxRadius;
+        double y;
+        if (humanPosition.getY() >= doorStartY && humanPosition.getY() <= doorEndY) {
+            y = humanPosition.getY();
+        } else if (humanPosition.getY() > doorEndY) {
+            y = doorEndY;
+        } else {
+            y = doorStartY;
+        }
+
         return new Position(
                 this.configuration.getBounds().getWidth(),
-                (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2
+                y
         );
     }
 
@@ -347,10 +354,11 @@ public class Simulation extends Serializable {
     }
 
     private boolean hasReachedDoor(Particle particle) {
+        // Consideramos que al menos mitad del humano tiene que estar por fuera (por eso x >= width)
         return Simulation.isHuman(particle)
                 && particle.getPosition().getX() >= this.configuration.getBounds().getWidth()
-                && particle.getPosition().getY() >= (this.configuration.getBounds().getHeight() - this.configuration.getBounds().getDoorsSize()) / 2
-                && particle.getPosition().getY() <= (this.configuration.getBounds().getHeight() + this.configuration.getBounds().getDoorsSize()) / 2;
+                && particle.getPosition().getY() >= this.configuration.getBounds().getDoorsStartY() + particle.getRadius().getCurrentRadius()
+                && particle.getPosition().getY() <= this.configuration.getBounds().getDoorsEndY() - particle.getRadius().getCurrentRadius();
     }
 
     private void calculateBittenZombies(double absoluteTime) {
