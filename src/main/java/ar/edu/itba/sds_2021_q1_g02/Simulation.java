@@ -120,6 +120,7 @@ public class Simulation extends Serializable {
 
             if (this.hasReachedDoor(particle)) {
                 iterator.remove();
+                this.allParticles.remove(particle);
             }
         }
     }
