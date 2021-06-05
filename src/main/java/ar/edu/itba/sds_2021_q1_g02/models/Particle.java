@@ -11,14 +11,12 @@ public class Particle {
     private Position position;
     private Velocity velocity;
     private Type type;
-    private final Set<Particle> neighbors;
 
     public Particle(int id, Radius radius, Position position, Velocity velocity, Type type) {
         this.id = id;
         this.radius = radius;
         this.position = position;
         this.velocity = velocity;
-        this.neighbors = new HashSet<>();
         this.type = type;
     }
 
@@ -46,16 +44,8 @@ public class Particle {
         this.velocity = velocity;
     }
 
-    public Type getProperty() {
-        return this.type;
-    }
-
-    public void setProperty(Type property) {
+    public void setType(Type property) {
         this.type = property;
-    }
-
-    public Collection<Particle> getNeighbors() {
-        return this.neighbors;
     }
 
     public Type getType() {
@@ -74,8 +64,11 @@ public class Particle {
     }
 
     public double distanceTo(Particle other) {
-        //TODO: Check if radius must be considered or not
-        return (this.getPosition().distanceTo(other.getPosition()) - this.getRadius().getCurrentRadius()) - other.getRadius().getCurrentRadius();
+        return Math.abs(this.rawDistanceTo(other));
+    }
+
+    public boolean isInContact(Particle other) {
+        return this.rawDistanceTo(other) <= 0;
     }
 
     @Override
@@ -89,5 +82,13 @@ public class Particle {
     @Override
     public int hashCode() {
         return Objects.hash(this.getId());
+    }
+
+    private double rawDistanceTo(Particle other) {
+        double centerDistance = this.getPosition().distanceTo(other.getPosition());
+        if (centerDistance == 0)
+            return 0;
+
+        return (centerDistance - this.getRadius().getCurrentRadius()) - other.getRadius().getCurrentRadius();
     }
 }
