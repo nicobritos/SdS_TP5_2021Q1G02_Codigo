@@ -249,7 +249,7 @@ public class Simulation extends Serializable {
                 Contractile.calculateVelocity(
                         position,
                         Collections.emptyList(),
-                        this.getEndPosition(),
+                        type.equals(Type.HUMAN) ? this.getEndPosition() : position,
                         this.configuration.getParticleConfiguration().getVh(),
                         radius,
                         this.configuration.getParticleConfiguration().getBeta(),
@@ -280,19 +280,19 @@ public class Simulation extends Serializable {
     }
 
     private boolean isInContact(Collection<Particle> neighbors, Particle particle) {
-        return neighbors.stream().anyMatch(particle::isInContact);
+        return neighbors.stream().filter(p -> !p.equals(particle)).anyMatch(particle::isInContact);
     }
 
-    public static List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
+    private List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
         final double m_y = targetPosition.getY() - position.getY();
         final double m_x = targetPosition.getX() - position.getX();
-        final Double m = m_y / m_x;
-        final Double p_m = -1 / m;
-        final Double b = position.getY() - p_m * position.getX();
+        final double m = m_y / m_x;
+        final double p_m = -1 / m;
+        final double b = position.getY() - p_m * position.getX();
         List<Particle> validParticles = new ArrayList<>();
         for (Particle particle : particles) {
             final Position pos = particle.getPosition();
-            if (p_m.isInfinite()) {
+            if (Double.isInfinite(p_m)) {
                 // Es una recta vertical
                 if (pos.getX() >= position.getX()) validParticles.add(particle);
             } else {

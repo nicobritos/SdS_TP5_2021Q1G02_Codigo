@@ -89,8 +89,8 @@ public final class Contractile {
 
     public static Vector2D calculateRepulsionVector(Vector2D eij, double distance, double angle, double ap,
                                                     double bp) {
-        final double r_x = eij.getX() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(angle);
-        final double r_y = eij.getY() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(angle);
+        final double r_x = eij.getX() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(Math.toRadians(angle));
+        final double r_y = eij.getY() * ap * Math.pow(Math.E, (-1 * distance) / bp) * Math.cos(Math.toRadians(angle));
 
         return new Vector2D(r_x, r_y);
     }
