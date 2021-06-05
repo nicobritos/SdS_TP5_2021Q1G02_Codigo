@@ -104,6 +104,8 @@ public class App {
 
         if (particle.getType().equals(Type.HUMAN)) {
             return new Color(0, 0, 1.0);
+        } else if (particle.getType().equals(Type.BITTEN_HUMAN)) {
+            return new Color(1.0, 0, 1.0);
         } else {
             return new Color(1.0, 0, 0);
         }
