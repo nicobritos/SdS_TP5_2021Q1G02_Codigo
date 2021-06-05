@@ -98,7 +98,7 @@ public class Simulation extends Serializable {
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
             // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
-            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
+            List<Particle> neighbors = Simulation.computeNeighbors(particle.getPosition(), this.getEndPosition(), this.allParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
@@ -124,7 +124,7 @@ public class Simulation extends Serializable {
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
             final Position humanTargetPosition = this.getNearestHumanPosition(particle);
-            List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), humanTargetPosition, this.zombieParticles);
+            List<Particle> neighbors = Simulation.computeNeighbors(particle.getPosition(), humanTargetPosition, this.zombieParticles);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
@@ -133,7 +133,7 @@ public class Simulation extends Serializable {
                     particle.getPosition(),
                     neighbors,
                     humanTargetPosition,
-                    this.configuration.getParticleConfiguration().getVh(),
+                    this.configuration.getParticleConfiguration().getVz(),
                     particle.getRadius(),
                     this.configuration.getParticleConfiguration().getBeta(),
                     isInContact
@@ -286,13 +286,13 @@ public class Simulation extends Serializable {
     public static List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
         final double m_y = targetPosition.getY() - position.getY();
         final double m_x = targetPosition.getX() - position.getX();
-        final Double m = m_y / m_x;
-        final Double p_m = -1 / m;
-        final Double b = position.getY() - p_m * position.getX();
+        final double m = m_y / m_x;
+        final double p_m = -1 / m;
+        final double b = position.getY() - p_m * position.getX();
         List<Particle> validParticles = new ArrayList<>();
         for (Particle particle : particles) {
             final Position pos = particle.getPosition();
-            if (p_m.isInfinite()) {
+            if (Double.isInfinite(p_m)) {
                 // Es una recta vertical
                 if (pos.getX() >= position.getX()) validParticles.add(particle);
             } else {
