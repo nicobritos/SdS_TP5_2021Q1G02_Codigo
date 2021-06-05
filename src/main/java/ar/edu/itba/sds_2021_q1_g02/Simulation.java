@@ -96,7 +96,8 @@ public class Simulation extends Serializable {
         Iterator<Particle> iterator = this.humanParticles.iterator();
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
-            Set<Particle> neighbors = this.computeNeighbors(particle);
+            // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
+            Set<Particle> neighbors = this.computeNeighbors(this.allParticles, particle);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
@@ -121,7 +122,7 @@ public class Simulation extends Serializable {
         Iterator<Particle> iterator = this.zombieParticles.iterator();
         while (iterator.hasNext()) {
             Particle particle = iterator.next();
-            Set<Particle> neighbors = this.computeNeighbors(particle);
+            Set<Particle> neighbors = this.computeNeighbors(this.zombieParticles, particle);
             boolean isInContact = this.isInContact(neighbors, particle);
 
             particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
@@ -129,7 +130,7 @@ public class Simulation extends Serializable {
             particle.setVelocity(Contractile.calculateVelocity(
                     particle.getPosition(),
                     neighbors.stream().map(Particle::getPosition).collect(Collectors.toList()),
-                    this.getEndPosition(),
+                    this.getNearestHumanPosition(particle),
                     this.configuration.getParticleConfiguration().getVh(),
                     particle.getRadius(),
                     this.configuration.getParticleConfiguration().getBeta(),
@@ -280,8 +281,23 @@ public class Simulation extends Serializable {
         return neighbors.stream().anyMatch(particle::isInContact);
     }
 
-    private Set<Particle> computeNeighbors(Particle particle) {
-        return this.allParticles.stream().filter(p -> !p.equals(particle)).collect(Collectors.toSet());
+    private Set<Particle> computeNeighbors(Collection<Particle> particles, Particle particle) {
+        return particles.stream().filter(p -> !p.equals(particle)).collect(Collectors.toSet());
+    }
+
+    private Position getNearestHumanPosition(Particle zombie) {
+        double minDistance = Double.POSITIVE_INFINITY;
+        Particle nearestHuman = null;
+
+        for (Particle human : this.humanParticles) {
+            double distance = human.distanceTo(zombie);
+            if (distance <= this.configuration.getParticleConfiguration().getZombieFOV() && distance < minDistance) {
+                nearestHuman = human;
+                minDistance = distance;
+            }
+        }
+
+        return nearestHuman == null ? zombie.getPosition() : nearestHuman.getPosition();
     }
 
     private boolean hasReachedDoor(Particle particle) {
