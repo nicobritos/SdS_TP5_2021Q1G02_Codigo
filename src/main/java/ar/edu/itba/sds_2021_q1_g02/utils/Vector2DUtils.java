@@ -20,7 +20,7 @@ public class Vector2DUtils {
     public static Vector2D calculateVectorFromTwoPositions(Position positionA, Position positionB) {
         final double x = positionA.getX() - positionB.getX();
         final double y = positionA.getY() - positionB.getY();
-        return new Vector2D(x == 0 ? 0 : (x / Math.abs(x)), y == 0 ? 0 : (y / Math.abs(y)));
+        return new Vector2D(x, y);
     }
 
     public static Vector2D calculateNormalizedVector(Vector2D vector) {

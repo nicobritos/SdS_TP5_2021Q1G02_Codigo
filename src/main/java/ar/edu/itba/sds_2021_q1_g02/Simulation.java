@@ -249,7 +249,7 @@ public class Simulation extends Serializable {
                 Contractile.calculateVelocity(
                         position,
                         Collections.emptyList(),
-                        this.getEndPosition(),
+                        type.equals(Type.HUMAN) ? this.getEndPosition() : position,
                         this.configuration.getParticleConfiguration().getVh(),
                         radius,
                         this.configuration.getParticleConfiguration().getBeta(),
@@ -280,10 +280,10 @@ public class Simulation extends Serializable {
     }
 
     private boolean isInContact(Collection<Particle> neighbors, Particle particle) {
-        return neighbors.stream().anyMatch(particle::isInContact);
+        return neighbors.stream().filter(p -> !p.equals(particle)).anyMatch(particle::isInContact);
     }
 
-    public static List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
+    private List<Particle> computeNeighbors(Position position, Position targetPosition, Collection<Particle> particles) {
         final double m_y = targetPosition.getY() - position.getY();
         final double m_x = targetPosition.getX() - position.getX();
         final double m = m_y / m_x;
