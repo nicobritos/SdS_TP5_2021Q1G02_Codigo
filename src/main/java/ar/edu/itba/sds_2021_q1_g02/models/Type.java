@@ -5,5 +5,6 @@ public enum Type {
     ZOMBIE,
     CORNER,
     HUMAN_DOOR,
-    ZOMBIE_DOOR
+    ZOMBIE_DOOR,
+    BITTEN_HUMAN
 }
