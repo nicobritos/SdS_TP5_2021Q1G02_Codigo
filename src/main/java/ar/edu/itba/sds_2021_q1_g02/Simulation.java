@@ -86,14 +86,16 @@ public class Simulation extends Serializable {
             return;
 
         Iterator<Map.Entry<Double, Collection<Particle>>> iterator =
-                this.bittenHumansTime.tailMap(toKey, true).entrySet().iterator();
+                this.bittenHumansTime.headMap(toKey, true).entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Double, Collection<Particle>> entry = iterator.next();
             entry.getValue().forEach(particle -> {
-                particle.setType(Type.ZOMBIE);
-                this.humanParticles.remove(particle);
-                this.zombieParticles.add(particle);
-                this.putZombieVelocity(particle, dt);
+                if (Simulation.isBittenHuman(particle)) {
+                    particle.setType(Type.ZOMBIE);
+                    this.humanParticles.remove(particle);
+                    this.zombieParticles.add(particle);
+                    this.putZombieVelocity(particle, dt);
+                }
             });
             iterator.remove();
         }
@@ -374,7 +376,7 @@ public class Simulation extends Serializable {
     private void calculateBittenZombies(double absoluteTime) {
         this.humanParticles
                 .stream()
-                .filter(particle -> !this.isInContact(this.zombieParticles, particle).isEmpty())
+                .filter(particle -> !this.isInContact(this.zombieParticles, particle).isEmpty() && Simulation.isHuman(particle))
                 .forEach(particle -> {
                     particle.setType(Type.BITTEN_HUMAN);
                     this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(particle);
