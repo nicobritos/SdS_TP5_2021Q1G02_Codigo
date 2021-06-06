@@ -26,7 +26,7 @@ public class Human extends Particle {
 
     public Zombie toZombie() {
         this.zombie = true;
-        return new Zombie(this.getId(), this.getRadius(), this.getPosition(), this.getVelocity());
+        return new Zombie(this.getId(), this.getRadius(), this.getPosition(), Velocity.ZERO);
     }
 
     public void addChasingZombie(Zombie zombie) {
