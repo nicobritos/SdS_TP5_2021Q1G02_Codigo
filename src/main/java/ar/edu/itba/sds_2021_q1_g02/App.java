@@ -19,7 +19,7 @@ public class App {
     private static final double ZOMBIES_FOV = 5; // Metros
     private static final double ZOMBIE_TURN_TIME = 7; // Segundos
     private static final int SPAWN_HUMANS_EVERY = 9;
-    private static final int HUMANS_PER_SPAWN = 1;
+    private static final int HUMANS_PER_SPAWN = 20;
     private static final int MAX_HUMANS = 100;
     private static final double VH = 1.6;
 
