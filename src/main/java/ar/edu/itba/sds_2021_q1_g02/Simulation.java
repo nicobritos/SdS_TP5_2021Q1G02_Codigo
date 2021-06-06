@@ -287,7 +287,7 @@ public class Simulation extends Serializable {
                 this.configuration.getBounds().getDoorsStartY() + this.configuration.getParticleConfiguration().getMaxRadius();
         double maxY =
                 this.configuration.getBounds().getDoorsEndY() - this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxX = this.configuration.getBounds().getWidth();
+        double maxX = this.configuration.getBounds().getWidth() - this.configuration.getParticleConfiguration().getMaxRadius();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
         double x = this.configuration.getBounds().getWidth() - this.configuration.getBounds().getZombieBoundWidth()
