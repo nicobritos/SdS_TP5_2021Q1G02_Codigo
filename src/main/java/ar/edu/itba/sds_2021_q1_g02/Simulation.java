@@ -283,10 +283,8 @@ public class Simulation extends Serializable {
     }
 
     private List<Position> getZombieStartingPositions() {
-        double minY =
-                this.configuration.getBounds().getDoorsStartY() + this.configuration.getParticleConfiguration().getMaxRadius();
-        double maxY =
-                this.configuration.getBounds().getDoorsEndY() - this.configuration.getParticleConfiguration().getMaxRadius();
+        double minY = this.configuration.getParticleConfiguration().getMaxRadius();
+        double maxY = this.configuration.getBounds().getHeight() - this.configuration.getParticleConfiguration().getMaxRadius();
         double maxX = this.configuration.getBounds().getWidth() - this.configuration.getParticleConfiguration().getMaxRadius();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
