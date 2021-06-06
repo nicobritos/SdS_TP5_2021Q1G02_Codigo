@@ -86,7 +86,7 @@ public final class Contractile {
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
             final double dij = position.distanceTo(particle.getPosition()) - radius - particle.getRadius();
             final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
-            avoidanceTarget = position.getY() > 10 ? avoidanceTarget.substract(repVec) : avoidanceTarget.add(repVec);
+            avoidanceTarget = avoidanceTarget.add(repVec);
         }
         return Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
     }

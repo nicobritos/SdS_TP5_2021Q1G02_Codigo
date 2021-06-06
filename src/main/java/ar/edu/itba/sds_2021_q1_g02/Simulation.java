@@ -53,11 +53,11 @@ public class Simulation extends Serializable {
         // Humanos que deberian de convertirse se convierten aca
         this.calculateNewZombies(actualStep.getAbsoluteTime().doubleValue(), this.configuration.getDt());
 
-        // Spawneamos mas humanos si es necesario
-        if (this.shouldSpawnHumans(previousStep.getAbsoluteTime().doubleValue())) {
-            this.spawnHumans(actualStep.getAbsoluteTime().doubleValue());
-            this.lastHumanSpawned = actualStep.getAbsoluteTime().doubleValue();
-        }
+//        // Spawneamos mas humanos si es necesario
+//        if (this.shouldSpawnHumans(previousStep.getAbsoluteTime().doubleValue())) {
+//            this.spawnHumans(actualStep.getAbsoluteTime().doubleValue());
+//            this.lastHumanSpawned = actualStep.getAbsoluteTime().doubleValue();
+//        }
 
         // Movemos las particulas por un dt y calculamos nuevas velocidades
         this.moveParticles(this.configuration.getDt());
@@ -141,7 +141,7 @@ public class Simulation extends Serializable {
 
     private void putHumanVelocity(Human human, double dt) {
         Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(), human.getRadius());
-        List<Particle> neighbors = this.computeNeighbors(human.getPosition(), exitDoorPosition, this.allParticles);
+        List<Particle> neighbors = this.computeNeighbors(human, exitDoorPosition, this.allParticles);
         List<Particle> inContactParticles = this.getParticlesInContact(neighbors, human);
         List<Position> inContactWalls = this.getNearestPositionOfWallInContact(human);
         human.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(human.getParticleZone(), dt,
@@ -175,7 +175,7 @@ public class Simulation extends Serializable {
 
         this.setChasing(zombie, humanTarget);
 
-        List<Particle> neighbors = this.computeNeighbors(zombie.getPosition(), targetPosition,
+        List<Particle> neighbors = this.computeNeighbors(zombie, targetPosition,
                 this.zombieParticles);
         List<Particle> inContactParticles = this.getParticlesInContact(neighbors, zombie);
         List<Position> inContactWalls = this.getNearestPositionOfWallInContact(zombie);
@@ -283,7 +283,6 @@ public class Simulation extends Serializable {
 
             this.allParticles.add(zombie);
             this.zombieParticles.add(zombie);
-            this.totalHumanCount++;
             this.totalCount++;
         }
     }
@@ -413,8 +412,9 @@ public class Simulation extends Serializable {
         return wallsInContact;
     }
 
-    private List<Particle> computeNeighbors(Position position, Position targetPosition,
+    private List<Particle> computeNeighbors(Particle from, Position targetPosition,
                                             Collection<? extends Particle> particles) {
+        final Position position = from.getPosition();
         final double m_y = targetPosition.getY() - position.getY();
         final double m_x = targetPosition.getX() - position.getX();
         final double m = m_y / m_x;
@@ -422,13 +422,22 @@ public class Simulation extends Serializable {
         final double b = position.getY() - p_m * position.getX();
         List<Particle> validParticles = new ArrayList<>();
         for (Particle particle : particles) {
+            if (from.equals(particle))
+                continue;
+
             final Position pos = particle.getPosition();
             if (Double.isInfinite(p_m)) {
                 // Es una recta vertical
                 if (pos.getX() >= position.getX()) validParticles.add(particle);
             } else {
                 final double y = p_m * pos.getX() + b;
-                if (pos.getY() >= y) validParticles.add(particle);
+                if (p_m > 0) {
+                    if (pos.getY() <= y)
+                        validParticles.add(particle);
+                } else {
+                    if (pos.getY() >= y)
+                        validParticles.add(particle);
+                }
             }
         }
         return validParticles;
