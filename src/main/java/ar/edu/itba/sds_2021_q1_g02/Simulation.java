@@ -2,6 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02;
 
 import ar.edu.itba.sds_2021_q1_g02.models.*;
 import ar.edu.itba.sds_2021_q1_g02.serializer.Serializable;
+import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -91,9 +92,12 @@ public class Simulation extends Serializable {
             Map.Entry<Double, Collection<Human>> entry = iterator.next();
             entry.getValue().forEach(human -> {
                 if (human.hasBeenBitten()) {
-                    Zombie zombie = human.convertToZombie();
+                    this.allParticles.remove(human);
                     this.humanParticles.remove(human);
+
+                    Zombie zombie = human.toZombie();
                     this.zombieParticles.add(zombie);
+                    this.allParticles.add(zombie);
                     this.putZombieVelocity(zombie, dt);
                 }
             });
@@ -156,8 +160,20 @@ public class Simulation extends Serializable {
     }
 
     private void putZombieVelocity(Zombie zombie, double dt) {
-        final Position humanTargetPosition = this.getNearestHumanPosition(zombie);
-        List<Particle> neighbors = this.computeNeighbors(zombie.getPosition(), humanTargetPosition,
+        final Human humanTarget = this.getNearestHuman(zombie);
+        final Position targetPosition;
+        if (humanTarget == null) {
+            targetPosition = zombie.getPosition();
+        } else if (!humanTarget.hasBeenBitten()) {
+            targetPosition = humanTarget.getPosition();
+        } else {
+            // Encontrar una targetPosition que haga que el radio de ambas particulas se toquen
+            targetPosition = this.nearestPositionWithRadius(zombie, humanTarget);
+        }
+
+        this.setChasing(zombie, humanTarget);
+
+        List<Particle> neighbors = this.computeNeighbors(zombie.getPosition(), targetPosition,
                 this.zombieParticles);
         List<Particle> inContactParticles = this.isInContact(neighbors, zombie);
 
@@ -166,12 +182,27 @@ public class Simulation extends Serializable {
         zombie.setVelocity(Contractile.calculateVelocity(
                 zombie.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
-                humanTargetPosition,
+                targetPosition,
                 this.configuration.getParticleConfiguration().getVz(),
                 zombie.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
                 !inContactParticles.isEmpty()
         ));
+    }
+
+    private void setChasing(Zombie zombie, Human humanTarget) {
+        if (
+                (zombie.getChasing() == null && humanTarget == null)
+                || (zombie.getChasing() != null && zombie.getChasing().equals(humanTarget))
+        ) {
+            return;
+        }
+
+        if (zombie.getChasing() != null)
+            zombie.getChasing().removeChasingZombie(zombie);
+        if (humanTarget != null)
+            humanTarget.addChasingZombie(zombie);
+        zombie.setChasing(humanTarget);
     }
 
     private boolean shouldSpawnHumans(double absTime) {
@@ -367,11 +398,11 @@ public class Simulation extends Serializable {
         return validParticles;
     }
 
-    private Position getNearestHumanPosition(Particle zombie) {
+    private Human getNearestHuman(Particle zombie) {
         double minDistance = Double.POSITIVE_INFINITY;
-        Particle nearestHuman = null;
+        Human nearestHuman = null;
 
-        for (Particle human : this.humanParticles) {
+        for (Human human : this.humanParticles) {
             double distance = human.distanceTo(zombie);
             if (distance <= this.configuration.getParticleConfiguration().getZombieFOV() && distance < minDistance) {
                 nearestHuman = human;
@@ -379,7 +410,7 @@ public class Simulation extends Serializable {
             }
         }
 
-        return nearestHuman == null ? zombie.getPosition() : nearestHuman.getPosition();
+        return nearestHuman;
     }
 
     private boolean hasReachedDoor(Human human) {
@@ -405,6 +436,19 @@ public class Simulation extends Serializable {
                 this.configuration.getParticleConfiguration().getMinRadius(),
                 this.configuration.getParticleConfiguration().getMaxRadius(),
                 this.configuration.getParticleConfiguration().getMaxRadius()
+        );
+    }
+
+    private Position nearestPositionWithRadius(Particle sourceParticle, Particle targetParticle) {
+        // Target - source would yield a vector point towards the target particle
+        Vector2D positionVector = Vector2DUtils.calculateVectorFromTwoPositions(targetParticle.getPosition(), sourceParticle.getPosition());
+        positionVector = Vector2DUtils.calculateNormalizedVector(positionVector);
+
+        // TODO: Ver si usar el current, el max o una combinacion, ni idea
+        double totalRadius = sourceParticle.getRadius().getCurrentRadius() + targetParticle.getRadius().getCurrentRadius();
+        return new Position(
+                sourceParticle.getPosition().getX() + positionVector.getX() * totalRadius,
+                sourceParticle.getPosition().getY() + positionVector.getY() * totalRadius
         );
     }
 

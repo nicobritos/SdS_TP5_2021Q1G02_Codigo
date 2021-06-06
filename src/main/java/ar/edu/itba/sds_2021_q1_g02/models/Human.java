@@ -5,15 +5,17 @@ import java.util.Set;
 
 public class Human extends Particle {
     private final Set<Zombie> chasedBy;
+    private boolean zombie;
 
     public Human(int id, Radius radius, Position position, Velocity velocity) {
         super(id, radius, position, velocity, Type.HUMAN);
 
         this.chasedBy = new HashSet<>();
+        this.zombie = false;
     }
 
     public boolean hasBeenBitten() {
-        return this.getType().equals(Type.BITTEN_HUMAN);
+        return this.getType().equals(Type.BITTEN_HUMAN) && !this.zombie;
     }
 
     public void bite() {
@@ -21,7 +23,8 @@ public class Human extends Particle {
         // TODO: Iterate chasing zombies to recalculate new next position
     }
 
-    public Zombie convertToZombie() {
+    public Zombie toZombie() {
+        this.zombie = true;
         return new Zombie(this.getId(), this.getRadius(), this.getPosition(), this.getVelocity());
     }
 

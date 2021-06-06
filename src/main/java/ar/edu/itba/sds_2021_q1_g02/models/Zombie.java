@@ -11,10 +11,6 @@ public class Zombie extends Particle {
         this.chasing = human;
     }
 
-    public void stopChasing() {
-        this.setChasing(null);
-    }
-
     public Human getChasing() {
         return this.chasing;
     }
