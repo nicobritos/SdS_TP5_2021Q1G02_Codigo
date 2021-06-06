@@ -139,19 +139,20 @@ public class Simulation extends Serializable {
     private void putHumanVelocity(Particle particle, double dt) {
         Position exitDoorPosition = this.getHumanExitDoorPosition(particle.getPosition(),
                 particle.getRadius().getMaxRadius());
-        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), exitDoorPosition,
-                this.allParticles);
-        List<Particle> inContactParticles = this.isInContact(neighbors, particle);
+        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), exitDoorPosition, this.allParticles);
+        List<Particle> inContactParticles = this.getParticlesInContact(neighbors, particle);
+        List<Position> inContactWalls = this.getNearestPositionOfWallInContact(particle);
         particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5,
                 !inContactParticles.isEmpty()));
         particle.setVelocity(Contractile.calculateVelocity(
                 particle.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
+                inContactWalls,
                 exitDoorPosition,
                 this.configuration.getParticleConfiguration().getVh(),
                 particle.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
-                !inContactParticles.isEmpty()
+                !inContactParticles.isEmpty() || !inContactWalls.isEmpty()
         ));
     }
 
@@ -159,18 +160,20 @@ public class Simulation extends Serializable {
         final Position humanTargetPosition = this.getNearestHumanPosition(particle);
         List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), humanTargetPosition,
                 this.zombieParticles);
-        List<Particle> inContactParticles = this.isInContact(neighbors, particle);
+        List<Particle> inContactParticles = this.getParticlesInContact(neighbors, particle);
+        List<Position> inContactWalls = this.getNearestPositionOfWallInContact(particle);
 
         particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5,
                 !inContactParticles.isEmpty()));
         particle.setVelocity(Contractile.calculateVelocity(
                 particle.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
+                inContactWalls,
                 humanTargetPosition,
                 this.configuration.getParticleConfiguration().getVz(),
                 particle.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
-                !inContactParticles.isEmpty()
+                !inContactParticles.isEmpty() || !inContactWalls.isEmpty()
         ));
     }
 
@@ -283,6 +286,7 @@ public class Simulation extends Serializable {
                 Contractile.calculateVelocity(
                         position,
                         Collections.emptyList(),
+                        Collections.emptyList(),
                         type.equals(Type.HUMAN) ? this.getHumanExitDoorPosition(position, radius.getMaxRadius()) :
                                 position,
                         this.configuration.getParticleConfiguration().getVh(),
@@ -325,8 +329,26 @@ public class Simulation extends Serializable {
         return false;
     }
 
-    private List<Particle> isInContact(Collection<Particle> neighbors, Particle particle) {
+    private List<Particle> getParticlesInContact(Collection<Particle> neighbors, Particle particle) {
         return neighbors.stream().filter(p -> !p.equals(particle) && p.isInContact(particle)).collect(Collectors.toList());
+    }
+
+    private List<Position> getNearestPositionOfWallInContact(Particle particle) {
+        List<Position> wallsInContact = new ArrayList<>();
+        final double pos_x = particle.getPosition().getX();
+        final double pos_y = particle.getPosition().getY();
+        final double r = particle.getRadius().getCurrentRadius();
+        final double min_x = 0;
+        final double min_y = 0;
+        final double max_x = this.configuration.getBounds().getWidth();
+        final double max_y = this.configuration.getBounds().getHeight();
+
+        if (pos_x - r <= min_x || pos_x + r >= max_x) {
+            wallsInContact.add(new Position(pos_x - r <= min_x ? min_x : max_x, pos_y));
+        } else if (pos_y - r <= min_y || pos_y + r >= max_y) {
+            wallsInContact.add(new Position(pos_x, pos_y - r <= min_y ? min_y : max_y));
+        }
+        return wallsInContact;
     }
 
     private List<Particle> computeNeighbors(Position position, Position targetPosition,
@@ -376,7 +398,7 @@ public class Simulation extends Serializable {
     private void calculateBittenZombies(double absoluteTime) {
         this.humanParticles
                 .stream()
-                .filter(particle -> !this.isInContact(this.zombieParticles, particle).isEmpty() && Simulation.isHuman(particle))
+                .filter(particle -> !this.getParticlesInContact(this.zombieParticles, particle).isEmpty() && Simulation.isHuman(particle))
                 .forEach(particle -> {
                     particle.setType(Type.BITTEN_HUMAN);
                     this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(particle);

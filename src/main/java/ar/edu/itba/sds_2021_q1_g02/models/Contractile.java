@@ -3,6 +3,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 import javafx.geometry.Pos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,9 +11,11 @@ public final class Contractile {
     private Contractile() {
     }
 
-    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
+    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, List<Position> inContactWalls,Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
         if (isInContact) {
-            return calculateEscapeVelocity(position, otherParticles, maxVelocity);
+            List<Position> allPositions = otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList());
+            allPositions.addAll(inContactWalls);
+            return calculateEscapeVelocity(position, allPositions, maxVelocity);
         }
 
         final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
@@ -49,11 +52,11 @@ public final class Contractile {
                 velocityMagnitude * avoidanceTargetDirection.getY());
     }
 
-    private static Velocity calculateEscapeVelocity(Position position, List<Particle> otherParticles,
+    private static Velocity calculateEscapeVelocity(Position position, List<Position> othersPosition,
                                                     double velocityMagnitude) {
         Vector2D sumEij = new Vector2D(0, 0);
-        for (Particle particle : otherParticles) {
-            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
+        for (Position pos : othersPosition) {
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, pos);
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
             sumEij = sumEij.add(normalizedEij);
         }
