@@ -144,7 +144,7 @@ public class Simulation extends Serializable {
 
     private void putHumanVelocity(Human human, double dt) {
         Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(),
-                human.getRadius().getMaxRadius());
+                human.getRadius().getCurrentRadius());
         List<Particle> neighbors = this.computeNeighbors(human.getPosition(), exitDoorPosition, this.allParticles);
         List<Particle> inContactParticles = this.getParticlesInContact(neighbors, human);
         List<Position> inContactWalls = this.getNearestPositionOfWallInContact(human);
@@ -322,7 +322,7 @@ public class Simulation extends Serializable {
                         position,
                         Collections.emptyList(),
                         Collections.emptyList(),
-                        this.getHumanExitDoorPosition(position, radius.getMaxRadius()),
+                        this.getHumanExitDoorPosition(position, radius.getCurrentRadius()),
                         this.configuration.getParticleConfiguration().getVh(),
                         radius,
                         this.configuration.getParticleConfiguration().getBeta(),
@@ -351,16 +351,16 @@ public class Simulation extends Serializable {
         );
     }
 
-    private Position getHumanExitDoorPosition(Position humanPosition, double maxRadius) {
-        double doorStartY = this.configuration.getBounds().getDoorsStartY() + maxRadius;
-        double doorEndY = this.configuration.getBounds().getDoorsEndY() - maxRadius;
+    private Position getHumanExitDoorPosition(Position humanPosition, double radius) {
+        double doorStartY = this.configuration.getBounds().getDoorsStartY() + radius;
+        double doorEndY = this.configuration.getBounds().getDoorsEndY() - radius;
         double y;
         if (humanPosition.getY() >= doorStartY && humanPosition.getY() <= doorEndY) {
             y = humanPosition.getY();
         } else if (humanPosition.getY() > doorEndY) {
-            y = doorEndY;
-        } else {
             y = doorStartY;
+        } else {
+            y = doorEndY;
         }
 
         return new Position(
