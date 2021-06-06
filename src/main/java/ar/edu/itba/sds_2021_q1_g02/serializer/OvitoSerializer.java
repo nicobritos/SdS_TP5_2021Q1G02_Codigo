@@ -129,7 +129,8 @@ public class OvitoSerializer extends Serializer {
     private Particle getHumanWallParticle(int id, double y, double radius) {
         return new SpecialParticle(
                 id,
-                new Radius(radius, radius, radius),
+                new ParticleZone(radius, radius, radius),
+                radius,
                 new Position(0, y),
                 Velocity.ZERO,
                 Type.HUMAN_DOOR
@@ -139,7 +140,8 @@ public class OvitoSerializer extends Serializer {
     private Particle getZombieWallParticle(int id, double y, double radius) {
         return new SpecialParticle(
                 id,
-                new Radius(radius, radius, radius),
+                new ParticleZone(radius, radius, radius),
+                radius,
                 new Position(this.configuration.getBounds().getWidth(), y),
                 Velocity.ZERO,
                 Type.ZOMBIE_DOOR
@@ -149,7 +151,8 @@ public class OvitoSerializer extends Serializer {
     private Particle generateCornerParticle(int id, Position position) {
         return new SpecialParticle(
                 id,
-                new Radius(0.01, 0.01, 0.01),
+                new ParticleZone(0.01, 0.01, 0.01),
+                0.01,
                 position,
                 Velocity.ZERO,
                 Type.CORNER

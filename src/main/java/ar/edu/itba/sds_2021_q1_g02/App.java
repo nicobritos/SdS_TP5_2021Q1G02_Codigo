@@ -22,6 +22,8 @@ public class App {
     private static final int HUMANS_PER_SPAWN = 20;
     private static final int MAX_HUMANS = 100;
     private static final double VH = 1.6;
+    private static final double HUMAN_RADIUS = 0.1;
+    private static final double ZOMBIE_RADIUS = 0.1;
 
     private static final int[] S_B_ZOMBIES = {10};
 //    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
@@ -61,7 +63,10 @@ public class App {
                 App.MAX_HUMANS,
                 App.SPAWN_HUMANS_EVERY,
                 App.HUMANS_PER_SPAWN,
-                App.BOUNDS
+                App.BOUNDS,
+                App.HUMAN_RADIUS,
+                App.ZOMBIE_RADIUS
+
         );
 
         Simulation simulation = new Simulation(configuration);
@@ -74,7 +79,7 @@ public class App {
 
                     // id (1), radius (1), pos (2), size (1), color (3, RGB)";
                     return particle.getId() + "\t" +
-                            particle.getRadius().getCurrentRadius() + "\t" +
+                            particle.getRadius() + "\t" +
                             particle.getPosition().getX() + "\t" +
                             particle.getPosition().getY() + "\t" +
                             particle.getVelocity().getxSpeed() + "\t" +
