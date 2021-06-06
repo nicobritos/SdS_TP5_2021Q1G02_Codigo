@@ -24,7 +24,7 @@ public class App {
     private static final double VH = 1.6;
 
     private static final int[] S_B_ZOMBIES = {10};
-    //    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
+//    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
     private static final double[] S_C_VZS = {0.4, 0.8, 1.2, 1.6, 2, 2.4};
 
     private static final double SERIALIZE_EVERY = 0.5;
@@ -40,8 +40,8 @@ public class App {
     }
 
     private static void simulationA() {
-        for (int i = 0; i < 1; i++) {
-            App.simulate(App.S_B_ZOMBIES[i], 1);
+        for (int i = 0; i < 6; i++) {
+            App.simulate(App.S_B_ZOMBIES[0], App.S_C_VZS[i]);
         }
     }
 
