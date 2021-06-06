@@ -10,6 +10,15 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
+    private static final RepulsionVectorConstants DEFAULT_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1);
+    private static final RepulsionVectorConstants SAME_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1); // Puede ser 0.5
+    private static final RepulsionVectorConstants DISTINCT_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1); // Puede ser 1
+//    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3};
+//    private static final double FACTOR_DECAY_RATE = 0.5;
+    private static final double[] TOP_FACTOR = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}; // Default, 20
+    private static final double[][] AREA_FACTORS = Simulation.computeAreasFactors(); // 20x20
+    private static final double FACTOR_DECAY_RATE = 0;
+
     private final Collection<Zombie> zombieParticles;
     private final Collection<Human> healthyHumanParticles;
     private final Collection<Particle> allParticles;
@@ -117,7 +126,6 @@ public class Simulation extends Serializable {
 
             // Movemos particula
             human.setPosition(Contractile.calculatePosition(human.getPosition(), human.getVelocity(), dt));
-            // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
             // Calculamos nueva velocidad y radio
             this.putHumanVelocity(human, dt);
 
@@ -141,12 +149,17 @@ public class Simulation extends Serializable {
 
     private void putHumanVelocity(Human human, double dt) {
         Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(), human.getRadius());
-        List<Particle> neighbors = this.computeNeighbors(human, exitDoorPosition, this.allParticles);
-        List<Particle> inContactParticles = this.getParticlesInContact(neighbors, human);
-        List<Position> inContactWalls = this.getNearestPositionOfWallInContact(human);
+
+        Map<Particle, RepulsionVectorConstants> neighbors = this.applyVectorConstants(
+                this.computeNeighbors(human, exitDoorPosition, this.allParticles)
+        );
+        Map<Particle, RepulsionVectorConstants> inContactParticles = this.getParticlesInContact(neighbors.keySet(), human);
+        Map<Position, RepulsionVectorConstants> inContactWalls = this.getNearestPositionOfWallInContact(human);
+
         human.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(human.getParticleZone(), dt,
                 0.5,
                 !inContactParticles.isEmpty()));
+
         human.setVelocity(Contractile.calculateVelocity(
                 human.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
@@ -159,6 +172,16 @@ public class Simulation extends Serializable {
                 !inContactParticles.isEmpty(),
                 !inContactWalls.isEmpty()
         ));
+    }
+
+    private Map<Particle, RepulsionVectorConstants> applyVectorConstants(Map<Particle, RepulsionVectorConstants> neighbors) {
+        for (Map.Entry<Particle, RepulsionVectorConstants> entry : neighbors.entrySet()) {
+            if (entry.getKey() instanceof Zombie) {
+                entry.setValue(entry.getValue().multiply(Simulation.getAreaFactor(entry.getKey().getPosition())));
+            }
+        }
+
+        return neighbors;
     }
 
     private void putZombieVelocity(Zombie zombie, double dt) {
@@ -175,10 +198,10 @@ public class Simulation extends Serializable {
 
         this.setChasing(zombie, humanTarget);
 
-        List<Particle> neighbors = this.computeNeighbors(zombie, targetPosition,
+        Map<Particle, RepulsionVectorConstants> neighbors = this.computeNeighbors(zombie, targetPosition,
                 this.zombieParticles);
-        List<Particle> inContactParticles = this.getParticlesInContact(neighbors, zombie);
-        List<Position> inContactWalls = this.getNearestPositionOfWallInContact(zombie);
+        Map<Particle, RepulsionVectorConstants> inContactParticles = this.getParticlesInContact(neighbors.keySet(), zombie);
+        Map<Position, RepulsionVectorConstants> inContactWalls = this.getNearestPositionOfWallInContact(zombie);
 
         zombie.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(zombie.getParticleZone(),
                 dt, 0.5,
@@ -324,8 +347,8 @@ public class Simulation extends Serializable {
                 position,
                 Contractile.calculateVelocity(
                         position,
-                        Collections.emptyList(),
-                        Collections.emptyList(),
+                        Collections.emptyMap(),
+                        Collections.emptyMap(),
                         this.getHumanExitDoorPosition(position, radius),
                         this.configuration.getParticleConfiguration().getVh(),
                         particleZone,
@@ -347,8 +370,8 @@ public class Simulation extends Serializable {
                 position,
                 Contractile.calculateVelocity(
                         position,
-                        Collections.emptyList(),
-                        Collections.emptyList(),
+                        Collections.emptyMap(),
+                        Collections.emptyMap(),
                         position,
                         this.configuration.getParticleConfiguration().getVz(),
                         particleZone,
@@ -387,12 +410,15 @@ public class Simulation extends Serializable {
         return false;
     }
 
-    private List<Particle> getParticlesInContact(Collection<? extends Particle> neighbors, Particle particle) {
-        return neighbors.parallelStream().filter(p -> !p.equals(particle) && p.isInContact(particle)).collect(Collectors.toList());
+    private Map<Particle, RepulsionVectorConstants> getParticlesInContact(Collection<? extends Particle> neighbors, Particle particle) {
+        return neighbors
+                .parallelStream()
+                .filter(p -> !p.equals(particle) && p.isInContact(particle))
+                .collect(Collectors.toMap(p -> p, p -> DEFAULT_REPULSION_VECTOR));
     }
 
-    private List<Position> getNearestPositionOfWallInContact(Particle particle) {
-        List<Position> wallsInContact = new ArrayList<>();
+    private Map<Position, RepulsionVectorConstants> getNearestPositionOfWallInContact(Particle particle) {
+        Map<Position, RepulsionVectorConstants> wallsInContact = new HashMap<>();
         final double pos_x = particle.getPosition().getX();
         final double pos_y = particle.getPosition().getY();
         final double r = particle.getRadius();
@@ -404,42 +430,39 @@ public class Simulation extends Serializable {
         if (particle instanceof Human && this.hasReachedDoor((Human) particle)) {
             return wallsInContact;
         }
+
         if (pos_x - r <= min_x || pos_x + r >= max_x) {
-            wallsInContact.add(new Position(pos_x - r <= min_x ? min_x : max_x, pos_y));
+            Position position = new Position(pos_x - r <= min_x ? min_x : max_x, pos_y);
+            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
         } else if (pos_y - r <= min_y || pos_y + r >= max_y) {
-            wallsInContact.add(new Position(pos_x, pos_y - r <= min_y ? min_y : max_y));
+            Position position = new Position(pos_x, pos_y - r <= min_y ? min_y : max_y);
+            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
         }
         return wallsInContact;
     }
 
-    private List<Particle> computeNeighbors(Particle from, Position targetPosition,
-                                            Collection<? extends Particle> particles) {
+    private Map<Particle, RepulsionVectorConstants> computeNeighbors(
+            Particle from,
+            Position targetPosition,
+            Collection<? extends Particle> particles)
+    {
         final Position position = from.getPosition();
-        final double m_y = targetPosition.getY() - position.getY();
-        final double m_x = targetPosition.getX() - position.getX();
-        final double m = m_y / m_x;
+        final double m = (targetPosition.getY() - position.getY()) / (targetPosition.getX() - position.getX());
         final double p_m = -1 / m;
         final double b = position.getY() - p_m * position.getX();
-        List<Particle> validParticles = new ArrayList<>();
+
+        Map<Particle, RepulsionVectorConstants> validParticles = new HashMap<>();
+
         for (Particle particle : particles) {
             if (from.equals(particle))
                 continue;
 
-            final Position pos = particle.getPosition();
-            if (Double.isInfinite(p_m)) {
-                // Es una recta vertical
-                if (pos.getX() >= position.getX()) validParticles.add(particle);
-            } else {
-                final double y = p_m * pos.getX() + b;
-                if (p_m > 0) {
-                    if (pos.getY() <= y)
-                        validParticles.add(particle);
-                } else {
-                    if (pos.getY() >= y)
-                        validParticles.add(particle);
-                }
+            if (Simulation.isParticleInFov(from.getPosition(), particle.getPosition(), p_m, b)) {
+                boolean sameParticle = from.getClass().equals(particle.getClass());
+                validParticles.put(particle, sameParticle ? SAME_PARTICLE_REPULSION_VECTOR : DISTINCT_PARTICLE_REPULSION_VECTOR);
             }
         }
+
         return validParticles;
     }
 
@@ -501,5 +524,70 @@ public class Simulation extends Serializable {
 
     private static boolean isParticleIn(Particle particle, double x, double y) {
         return (particle.getPosition().getX() - particle.getRadius() <= x && x <= particle.getPosition().getX() + particle.getRadius()) && (particle.getPosition().getY() - particle.getRadius() <= y && y <= particle.getPosition().getY() + particle.getRadius());
+    }
+
+    private static double getAreaFactor(Position position) {
+        double[][] factors = Simulation.getAreasFactors();
+        int i = Simulation.getXAreaIndex(position);
+        int j = Simulation.getYAreaIndex(position);
+        return factors[i][j];
+    }
+
+    private static int getXAreaIndex(Position position) {
+        return Simulation.getAreaIndex(position.getX());
+    }
+
+    private static int getYAreaIndex(Position position) {
+        return Simulation.getAreaIndex(position.getY());
+    }
+
+    private static int getAreaIndex(double p) {
+        return Math.max((int) Math.round(Math.floor(p / 20)), 0);
+    }
+
+    private static double[][] getAreasFactors() {
+        return AREA_FACTORS;
+    }
+
+    private static double[][] computeAreasFactors() {
+        double[][] factors = new double[20][20];
+
+        double f = 0;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < TOP_FACTOR.length; j++) {
+                factors[i][j] = Math.max(TOP_FACTOR[j] - f, 1);
+            }
+            f -= FACTOR_DECAY_RATE;
+        }
+
+        for (int i = 8; i < 12; i++) {
+            for (int j = 0; j < TOP_FACTOR.length; j++) {
+                factors[i][j] = 1; // Middle
+            }
+        }
+
+        f = 0;
+        for (int i = 12; i < 20; i++) {
+            for (int j = 0; j < TOP_FACTOR.length; j++) {
+                factors[i][j] = Math.max(TOP_FACTOR[j] - f, 1);
+            }
+            f += FACTOR_DECAY_RATE;
+        }
+
+        return factors;
+    }
+
+    private static boolean isParticleInFov(Position sourcePosition, Position otherPosition, double p_m, double b) {
+        if (Double.isInfinite(p_m)) {
+            // Es una recta vertical
+            return otherPosition.getX() >= sourcePosition.getX();
+        }
+
+        final double y = p_m * otherPosition.getX() + b;
+        if (p_m > 0) {
+            return otherPosition.getY() <= y;
+        } else {
+            return otherPosition.getY() >= y;
+        }
     }
 }

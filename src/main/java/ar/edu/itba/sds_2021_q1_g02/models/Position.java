@@ -1,6 +1,8 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
 
+import java.util.Objects;
+
 public class Position {
     private double x;
     private double y;
@@ -57,5 +59,18 @@ public class Position {
     @Override
     public String toString() {
         return String.format("(%.5f, %.5f)", this.x, this.y);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Position)) return false;
+        Position position = (Position) o;
+        return Double.compare(position.getX(), this.getX()) == 0 && Double.compare(position.getY(), this.getY()) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getX(), this.getY());
     }
 }
