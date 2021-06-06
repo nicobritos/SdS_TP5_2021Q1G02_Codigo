@@ -8,8 +8,8 @@ public class Human extends Particle {
     private final Set<Zombie> chasedBy;
     private boolean zombie;
 
-    public Human(int id, Radius radius, Position position, Velocity velocity) {
-        super(id, radius, position, velocity, Type.HUMAN);
+    public Human(int id, ParticleZone particleZone, double radius, Position position, Velocity velocity) {
+        super(id, particleZone, radius, position, velocity, Type.HUMAN);
 
         this.chasedBy = new HashSet<>();
         this.zombie = false;
@@ -21,10 +21,9 @@ public class Human extends Particle {
 
     public void bite() {
         this.setType(Type.BITTEN_HUMAN);
-        this.getRadius().setCurrentRadius(this.getRadius().getMinRadius());
     }
 
-    public Zombie toZombie() {
+    public Zombie toZombie(ParticleZone particleZone, double radius) {
         this.zombie = true;
         return new Zombie(this.getId(), this.getRadius(), this.getPosition(), Velocity.ZERO);
     }

@@ -11,17 +11,25 @@ public final class Contractile {
     private Contractile() {
     }
 
-    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, List<Position> inContactWalls, Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
-        if (isInContact) {
-            if(!inContactWalls.isEmpty()) {
-                return calculateEscapeVelocity(position, inContactWalls, maxVelocity);
+    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles,
+                                             List<Position> inContactWalls, Position targetPosition,
+                                             double maxVelocity, ParticleZone particleZone, double radius,
+                                             double beta, boolean isInContactWithParticle,
+                                             boolean isInContactWithWall) {
+        if (isInContactWithParticle || isInContactWithWall) {
+            List<Position> inContactPositions = new ArrayList<>();
+            if (isInContactWithParticle) {
+                inContactPositions.addAll(otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList()));
             }
-            List<Position> otherParticlesPosition = otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList());
-            return calculateEscapeVelocity(position, otherParticlesPosition, maxVelocity);
+            if (isInContactWithWall) {
+                inContactPositions.addAll(inContactWalls);
+            }
+            return calculateEscapeVelocity(position, inContactPositions, maxVelocity);
         }
 
-        final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
-        return calculateDesiredVelocity(position, radius.getCurrentRadius(), otherParticles, targetPosition, velocityMagnitude);
+        final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, particleZone, beta);
+        return calculateDesiredVelocity(position, radius, otherParticles, targetPosition, velocityMagnitude);
+
     }
 
     public static Position calculatePosition(Position position, Velocity velocity, double dt) {
@@ -30,14 +38,14 @@ public final class Contractile {
         return new Position(x, y);
     }
 
-    public static double calculateRadius(Radius radius, double dt, double tau, boolean isInContact) {
+    public static double calculateParticleZoneRadius(ParticleZone particleZone, double dt, double tau,
+                                                     boolean isInContact) {
         if (isInContact) {
-            return radius.getMinRadius();
+            return particleZone.getMinRadius();
         }
-
         //tau = 0.5 seg
-        double maxRadius = radius.getMaxRadius();
-        double currentRadius = radius.getCurrentRadius();
+        double maxRadius = particleZone.getMaxRadius();
+        double currentRadius = particleZone.getCurrentRadius();
 
         return currentRadius < maxRadius ? currentRadius + (maxRadius / (tau / dt)) : maxRadius;
     }
@@ -67,28 +75,31 @@ public final class Contractile {
 
     }
 
-    private static Vector2D calculateAvoidanceTargetDirection(Position position, double radius, List<Particle> otherParticles,
-                                                              Position targetPosition) {
+    private static Vector2D calculateAvoidanceTargetDirection(Position position, double radius,
+                                                              List<Particle> otherParticles, Position targetPosition) {
         Vector2D avoidanceTarget = Vector2DUtils.calculateVectorFromTwoPositions(targetPosition, position);
         avoidanceTarget = Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
         for (Particle particle : otherParticles) {
-            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, particle.getPosition());
+            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition,
+                    particle.getPosition());
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
-            final double dij = position.distanceTo(particle.getPosition()) - radius - particle.getRadius().getCurrentRadius();
+            final double dij = position.distanceTo(particle.getPosition()) - radius - particle.getRadius();
             final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
-            avoidanceTarget = avoidanceTarget.add(repVec);
+            avoidanceTarget = position.getY() > 10 ? avoidanceTarget.substract(repVec) : avoidanceTarget.add(repVec);
         }
         return Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
     }
 
-    private static double calculateVelocityMagnitude(double maxVelocity, Radius radius, double beta) {
+    private static double calculateVelocityMagnitude(double maxVelocity, ParticleZone particleZone, double beta) {
         // beta = 1
-        double currentRadius = radius.getCurrentRadius();
-        double minRadius = radius.getMinRadius();
-        double maxRadius = radius.getMaxRadius();
+        double currentRadius = particleZone.getCurrentRadius();
+        double minRadius = particleZone.getMinRadius();
+        double maxRadius = particleZone.getMaxRadius();
 
-        double radiusDivision = (currentRadius - minRadius) / (maxRadius - minRadius);
+        double nom = currentRadius - minRadius;
+        double den = maxRadius - minRadius;
+        double radiusDivision = nom == den ? 1 : (nom) / (den);
         return maxVelocity * Math.pow(radiusDivision, beta);
     }
 

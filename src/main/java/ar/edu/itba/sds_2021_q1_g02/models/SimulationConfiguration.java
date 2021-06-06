@@ -12,8 +12,12 @@ public class SimulationConfiguration {
     private final double spawnHumansEvery;
     private final int humansPerSpawn;
     private final Bounds bounds;
+    private final double humanRadius;
+    private final double zombieRadius;
 
-    public SimulationConfiguration(double dt, ParticleConfiguration particleConfiguration, double zombieTurnTime, int maxZombies, int maxHumans, double spawnHumansEvery, int humansPerSpawn, Bounds bounds) {
+    public SimulationConfiguration(double dt, ParticleConfiguration particleConfiguration, double zombieTurnTime,
+                                   int maxZombies, int maxHumans, double spawnHumansEvery, int humansPerSpawn,
+                                   Bounds bounds, double humanRadius, double zombieRadius) {
         this.dt = dt;
         this.dtAsBigDecimal = BigDecimal.valueOf(dt);
         this.particleConfiguration = particleConfiguration;
@@ -23,6 +27,8 @@ public class SimulationConfiguration {
         this.spawnHumansEvery = spawnHumansEvery;
         this.humansPerSpawn = humansPerSpawn;
         this.bounds = bounds;
+        this.humanRadius = humanRadius;
+        this.zombieRadius = zombieRadius;
     }
 
     public double getDt() {
@@ -59,5 +65,13 @@ public class SimulationConfiguration {
 
     public Bounds getBounds() {
         return this.bounds;
+    }
+
+    public double getHumanRadius() {
+        return this.humanRadius;
+    }
+
+    public double getZombieRadius() {
+        return this.zombieRadius;
     }
 }

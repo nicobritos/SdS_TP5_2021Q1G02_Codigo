@@ -4,13 +4,16 @@ import java.util.Objects;
 
 public abstract class Particle {
     private final int id;
-    private final Radius radius;
+    private final ParticleZone particleZone;
+    private final double radius;
     private Position position;
     private Velocity velocity;
     private Type type;
 
-    protected Particle(int id, Radius radius, Position position, Velocity velocity, Type type) {
+    protected Particle(int id, ParticleZone particleZone, double radius, Position position, Velocity velocity,
+                       Type type) {
         this.id = id;
+        this.particleZone = particleZone;
         this.radius = radius;
         this.position = position;
         this.velocity = velocity;
@@ -21,7 +24,11 @@ public abstract class Particle {
         return this.id;
     }
 
-    public Radius getRadius() {
+    public ParticleZone getParticleZone() {
+        return this.particleZone;
+    }
+
+    public double getRadius() {
         return this.radius;
     }
 
@@ -91,6 +98,6 @@ public abstract class Particle {
         if (centerDistance == 0)
             return 0;
 
-        return (centerDistance - this.getRadius().getCurrentRadius()) - other.getRadius().getCurrentRadius();
+        return (centerDistance - this.getRadius()) - other.getRadius();
     }
 }

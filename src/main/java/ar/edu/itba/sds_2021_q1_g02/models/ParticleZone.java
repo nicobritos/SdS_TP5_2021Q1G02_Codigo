@@ -1,11 +1,11 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
-public class Radius {
+public class ParticleZone {
     private final double minRadius;
     private final double maxRadius;
     private double currentRadius;
 
-    public Radius(double minRadius, double maxRadius, double currentRadius) {
+    public ParticleZone(double minRadius, double maxRadius, double currentRadius) {
         this.maxRadius = maxRadius;
         this.minRadius = minRadius;
         this.currentRadius = currentRadius;
