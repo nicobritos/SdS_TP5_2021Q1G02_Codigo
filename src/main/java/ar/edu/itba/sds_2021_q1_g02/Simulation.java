@@ -53,11 +53,11 @@ public class Simulation extends Serializable {
         // Humanos que deberian de convertirse se convierten aca
         this.calculateNewZombies(actualStep.getAbsoluteTime().doubleValue(), this.configuration.getDt());
 
-//        // Spawneamos mas humanos si es necesario
-//        if (this.shouldSpawnHumans(previousStep.getAbsoluteTime().doubleValue())) {
-//            this.spawnHumans(actualStep.getAbsoluteTime().doubleValue());
-//            this.lastHumanSpawned = actualStep.getAbsoluteTime().doubleValue();
-//        }
+        // Spawneamos mas humanos si es necesario
+        if (this.shouldSpawnHumans(previousStep.getAbsoluteTime().doubleValue())) {
+            this.spawnHumans(actualStep.getAbsoluteTime().doubleValue());
+            this.lastHumanSpawned = actualStep.getAbsoluteTime().doubleValue();
+        }
 
         // Movemos las particulas por un dt y calculamos nuevas velocidades
         this.moveParticles(this.configuration.getDt());
