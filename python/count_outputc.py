@@ -8,7 +8,7 @@ def main():
     #si esta en x>19.5  entonces llego a la salida
     #guardo su id y sugo iterando en todos
     step_index = 0
-    cantZ = [2, 5,10, 15,20,25,30,35]
+    cantZ = [0.4, 0.8, 1.2, 1.6, 2, 2.4]
     # cantZ=[10]
     cant_index = 0
 
@@ -18,7 +18,7 @@ def main():
         #leemos todos los archivos de un mismo timeline
         while step_index!= 10000:
             firstline = True
-            csvfile ="../output/simulation_" + str(cantZ[cant_index])+"_1.0_"+ str(step_index)+ ".xyz"
+            csvfile ="../output/simulation_10_" + str(cantZ[cant_index])+"_"+ str(step_index)+ ".xyz"
             if os.path.isfile(csvfile):
                 f = open(csvfile) 
                 line = f.readline().split('\t')
