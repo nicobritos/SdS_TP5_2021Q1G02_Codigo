@@ -1,18 +1,15 @@
 package ar.edu.itba.sds_2021_q1_g02.models;
 
-import java.util.Set;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 
-public class Particle {
+public abstract class Particle {
     private final int id;
     private final Radius radius;
     private Position position;
     private Velocity velocity;
     private Type type;
 
-    public Particle(int id, Radius radius, Position position, Velocity velocity, Type type) {
+    protected Particle(int id, Radius radius, Position position, Velocity velocity, Type type) {
         this.id = id;
         this.radius = radius;
         this.position = position;
@@ -44,8 +41,8 @@ public class Particle {
         this.velocity = velocity;
     }
 
-    public void setType(Type property) {
-        this.type = property;
+    protected void setType(Type type) {
+        this.type = type;
     }
 
     public Type getType() {
@@ -53,7 +50,7 @@ public class Particle {
     }
 
     public Particle copy() {
-        Particle particle = new Particle(this.id, this.radius, this.position, this.velocity, this.type);
+        Particle particle = this.childCopy();
 
         if (this.position != null)
             particle.setPosition(this.position.copy());
@@ -86,6 +83,8 @@ public class Particle {
     public int hashCode() {
         return Objects.hash(this.getId());
     }
+
+    protected abstract Particle childCopy();
 
     private double rawDistanceTo(Particle other) {
         double centerDistance = this.getPosition().distanceTo(other.getPosition());

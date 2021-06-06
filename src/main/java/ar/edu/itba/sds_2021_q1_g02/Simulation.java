@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
-    private final Collection<Particle> zombieParticles;
-    private final Collection<Particle> humanParticles;
+    private final Collection<Zombie> zombieParticles;
+    private final Collection<Human> humanParticles;
     private final Collection<Particle> allParticles;
     private final SimulationConfiguration configuration;
     private final Random random;
@@ -17,7 +17,7 @@ public class Simulation extends Serializable {
     private int totalHumanCount;
     private int totalCount;
     private double maxTime = 100;
-    private final TreeMap<Double, Collection<Particle>> bittenHumansTime;
+    private final TreeMap<Double, Collection<Human>> bittenHumansTime;
 
     public Simulation(SimulationConfiguration configuration) {
         this.zombieParticles = new LinkedList<>();
@@ -85,16 +85,16 @@ public class Simulation extends Serializable {
         if (toKey < 0)
             return;
 
-        Iterator<Map.Entry<Double, Collection<Particle>>> iterator =
+        Iterator<Map.Entry<Double, Collection<Human>>> iterator =
                 this.bittenHumansTime.headMap(toKey, true).entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Double, Collection<Particle>> entry = iterator.next();
-            entry.getValue().forEach(particle -> {
-                if (Simulation.isBittenHuman(particle)) {
-                    particle.setType(Type.ZOMBIE);
-                    this.humanParticles.remove(particle);
-                    this.zombieParticles.add(particle);
-                    this.putZombieVelocity(particle, dt);
+            Map.Entry<Double, Collection<Human>> entry = iterator.next();
+            entry.getValue().forEach(human -> {
+                if (human.hasBeenBitten()) {
+                    Zombie zombie = human.convertToZombie();
+                    this.humanParticles.remove(human);
+                    this.zombieParticles.add(zombie);
+                    this.putZombieVelocity(zombie, dt);
                 }
             });
             iterator.remove();
@@ -107,68 +107,68 @@ public class Simulation extends Serializable {
     }
 
     private void moveHumans(double dt) {
-        Iterator<Particle> iterator = this.humanParticles.iterator();
+        Iterator<Human> iterator = this.humanParticles.iterator();
         while (iterator.hasNext()) {
-            Particle particle = iterator.next();
-            if (Simulation.isBittenHuman(particle)) {
+            Human human = iterator.next();
+            if (human.hasBeenBitten()) {
                 // Si el humano fue mordido por un zombie no lo movemos, sin importar su entorno.
                 continue;
             }
             // Movemos particula
-            particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
+            human.setPosition(Contractile.calculatePosition(human.getPosition(), human.getVelocity(), dt));
             // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
             // Calculamos nueva velocidad y radio
-            this.putHumanVelocity(particle, dt);
-            if (this.hasReachedDoor(particle)) {
+            this.putHumanVelocity(human, dt);
+            if (this.hasReachedDoor(human)) {
                 iterator.remove();
-                this.allParticles.remove(particle);
+                this.allParticles.remove(human);
             }
         }
     }
 
     private void moveZombies(double dt) {
-        for (Particle particle : this.zombieParticles) {
+        for (Zombie zombie : this.zombieParticles) {
             // Movemos particula
-            particle.setPosition(Contractile.calculatePosition(particle.getPosition(), particle.getVelocity(), dt));
+            zombie.setPosition(Contractile.calculatePosition(zombie.getPosition(), zombie.getVelocity(), dt));
 
             // Calculamos nueva velocidad y radio
-            this.putZombieVelocity(particle, dt);
+            this.putZombieVelocity(zombie, dt);
         }
     }
 
-    private void putHumanVelocity(Particle particle, double dt) {
-        Position exitDoorPosition = this.getHumanExitDoorPosition(particle.getPosition(),
-                particle.getRadius().getMaxRadius());
-        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), exitDoorPosition,
+    private void putHumanVelocity(Human human, double dt) {
+        Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(),
+                human.getRadius().getMaxRadius());
+        List<Particle> neighbors = this.computeNeighbors(human.getPosition(), exitDoorPosition,
                 this.allParticles);
-        List<Particle> inContactParticles = this.isInContact(neighbors, particle);
-        particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5,
+        List<Particle> inContactParticles = this.isInContact(neighbors, human);
+        human.getRadius().setCurrentRadius(Contractile.calculateRadius(human.getRadius(), dt, 0.5,
                 !inContactParticles.isEmpty()));
-        particle.setVelocity(Contractile.calculateVelocity(
-                particle.getPosition(),
+        human.setVelocity(Contractile.calculateVelocity(
+                human.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
                 exitDoorPosition,
                 this.configuration.getParticleConfiguration().getVh(),
-                particle.getRadius(),
+                human.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
                 !inContactParticles.isEmpty()
         ));
     }
 
-    private void putZombieVelocity(Particle particle, double dt) {
-        final Position humanTargetPosition = this.getNearestHumanPosition(particle);
-        List<Particle> neighbors = this.computeNeighbors(particle.getPosition(), humanTargetPosition,
+    private void putZombieVelocity(Zombie zombie, double dt) {
+        final Position humanTargetPosition = this.getNearestHumanPosition(zombie);
+        List<Particle> neighbors = this.computeNeighbors(zombie.getPosition(), humanTargetPosition,
                 this.zombieParticles);
-        List<Particle> inContactParticles = this.isInContact(neighbors, particle);
+        List<Particle> inContactParticles = this.isInContact(neighbors, zombie);
 
-        particle.getRadius().setCurrentRadius(Contractile.calculateRadius(particle.getRadius(), dt, 0.5,
+        zombie.getRadius().setCurrentRadius(Contractile.calculateRadius(zombie.getRadius(), dt, 0.5,
                 !inContactParticles.isEmpty()));
-        particle.setVelocity(Contractile.calculateVelocity(
-                particle.getPosition(),
+        zombie.setVelocity(Contractile.calculateVelocity(
+                zombie.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
                 humanTargetPosition,
                 this.configuration.getParticleConfiguration().getVz(),
-                particle.getRadius(),
+                zombie.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
                 !inContactParticles.isEmpty()
         ));
@@ -184,8 +184,12 @@ public class Simulation extends Serializable {
                 : this.configuration.getHumansPerSpawn();
 
         for (int i = 0; i < max; i++) {
-            this.humanParticles.add(this.spawnParticle(this.getHumanStartingPosition(), Type.HUMAN));
+            Human human = this.spawnHuman(this.getHumanStartingPosition());
+
+            this.allParticles.add(human);
+            this.humanParticles.add(human);
             this.totalHumanCount++;
+            this.totalCount++;
         }
 
         this.lastHumanSpawned = absoluteTime;
@@ -237,7 +241,12 @@ public class Simulation extends Serializable {
 
         for (int i = 0; i < max; i++) {
             Position position = startingPositions.remove(this.random.nextInt(startingPositions.size()));
-            this.zombieParticles.add(this.spawnParticle(position, Type.ZOMBIE));
+            Zombie zombie = this.spawnZombie(position);
+
+            this.allParticles.add(zombie);
+            this.zombieParticles.add(zombie);
+            this.totalHumanCount++;
+            this.totalCount++;
         }
     }
 
@@ -268,34 +277,42 @@ public class Simulation extends Serializable {
         return positions;
     }
 
-    private Particle spawnParticle(Position position, Type type) {
-        // TODO: Check starting radius
-        Radius radius = new Radius(
-                this.configuration.getParticleConfiguration().getMinRadius(),
-                this.configuration.getParticleConfiguration().getMaxRadius(),
-                this.configuration.getParticleConfiguration().getMaxRadius()
-        );
+    private Human spawnHuman(Position position) {
+        Radius radius = this.getStartingRadius();
 
-        Particle particle = new Particle(
+        return new Human(
                 this.totalCount + 1,
                 radius,
                 position,
                 Contractile.calculateVelocity(
                         position,
                         Collections.emptyList(),
-                        type.equals(Type.HUMAN) ? this.getHumanExitDoorPosition(position, radius.getMaxRadius()) :
-                                position,
+                        this.getHumanExitDoorPosition(position, radius.getMaxRadius()),
                         this.configuration.getParticleConfiguration().getVh(),
                         radius,
                         this.configuration.getParticleConfiguration().getBeta(),
                         false
-                ),
-                type
+                )
         );
+    }
 
-        this.allParticles.add(particle);
-        this.totalCount++;
-        return particle;
+    private Zombie spawnZombie(Position position) {
+        Radius radius = this.getStartingRadius();
+
+        return new Zombie(
+                this.totalCount + 1,
+                radius,
+                position,
+                Contractile.calculateVelocity(
+                        position,
+                        Collections.emptyList(),
+                        position,
+                        this.configuration.getParticleConfiguration().getVz(),
+                        radius,
+                        this.configuration.getParticleConfiguration().getBeta(),
+                        false
+                )
+        );
     }
 
     private Position getHumanExitDoorPosition(Position humanPosition, double maxRadius) {
@@ -325,12 +342,12 @@ public class Simulation extends Serializable {
         return false;
     }
 
-    private List<Particle> isInContact(Collection<Particle> neighbors, Particle particle) {
+    private List<Particle> isInContact(Collection<? extends Particle> neighbors, Particle particle) {
         return neighbors.stream().filter(p -> !p.equals(particle) && p.isInContact(particle)).collect(Collectors.toList());
     }
 
     private List<Particle> computeNeighbors(Position position, Position targetPosition,
-                                            Collection<Particle> particles) {
+                                            Collection<? extends Particle> particles) {
         final double m_y = targetPosition.getY() - position.getY();
         final double m_x = targetPosition.getX() - position.getX();
         final double m = m_y / m_x;
@@ -365,30 +382,30 @@ public class Simulation extends Serializable {
         return nearestHuman == null ? zombie.getPosition() : nearestHuman.getPosition();
     }
 
-    private boolean hasReachedDoor(Particle particle) {
+    private boolean hasReachedDoor(Human human) {
         // Consideramos que al menos mitad del humano tiene que estar por fuera (por eso x >= width)
-        return Simulation.isHuman(particle)
-                && particle.getPosition().getX() >= this.configuration.getBounds().getWidth()
-                && particle.getPosition().getY() >= this.configuration.getBounds().getDoorsStartY() + particle.getRadius().getCurrentRadius()
-                && particle.getPosition().getY() <= this.configuration.getBounds().getDoorsEndY() - particle.getRadius().getCurrentRadius();
+        return human.getPosition().getX() >= this.configuration.getBounds().getWidth()
+                && human.getPosition().getY() >= this.configuration.getBounds().getDoorsStartY() + human.getRadius().getCurrentRadius()
+                && human.getPosition().getY() <= this.configuration.getBounds().getDoorsEndY() - human.getRadius().getCurrentRadius();
     }
 
     private void calculateBittenZombies(double absoluteTime) {
         this.humanParticles
                 .stream()
-                .filter(particle -> !this.isInContact(this.zombieParticles, particle).isEmpty() && Simulation.isHuman(particle))
-                .forEach(particle -> {
-                    particle.setType(Type.BITTEN_HUMAN);
-                    this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(particle);
+                .filter(human -> !this.isInContact(this.zombieParticles, human).isEmpty() && !human.hasBeenBitten())
+                .forEach(human -> {
+                    human.bite();
+                    this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(human);
                 });
     }
 
-    private static boolean isHuman(Particle particle) {
-        return particle.getType().equals(Type.HUMAN);
-    }
-
-    private static boolean isBittenHuman(Particle particle) {
-        return particle.getType().equals(Type.BITTEN_HUMAN);
+    private Radius getStartingRadius() {
+        // TODO: Check starting radius
+        return new Radius(
+                this.configuration.getParticleConfiguration().getMinRadius(),
+                this.configuration.getParticleConfiguration().getMaxRadius(),
+                this.configuration.getParticleConfiguration().getMaxRadius()
+        );
     }
 
     private static boolean isParticleIn(Particle particle, double x, double y) {
