@@ -76,8 +76,8 @@ public class OvitoSerializer extends Serializer {
     private Collection<Particle> getCornerParticles(int startId) {
         Collection<Particle> particles = new LinkedList<>();
 
-        particles.add(this.generatePointParticle(startId--, new Position(0, this.configuration.getBounds().getHeight())));
-        particles.add(this.generatePointParticle(startId, new Position(this.configuration.getBounds().getWidth(), 0)));
+        particles.add(this.generateCornerParticle(startId--, new Position(0, this.configuration.getBounds().getHeight())));
+        particles.add(this.generateCornerParticle(startId, new Position(this.configuration.getBounds().getWidth(), 0)));
 
         return particles;
     }
@@ -127,7 +127,7 @@ public class OvitoSerializer extends Serializer {
     }
 
     private Particle getHumanWallParticle(int id, double y, double radius) {
-        return new Particle(
+        return new SpecialParticle(
                 id,
                 new Radius(radius, radius, radius),
                 new Position(0, y),
@@ -137,7 +137,7 @@ public class OvitoSerializer extends Serializer {
     }
 
     private Particle getZombieWallParticle(int id, double y, double radius) {
-        return new Particle(
+        return new SpecialParticle(
                 id,
                 new Radius(radius, radius, radius),
                 new Position(this.configuration.getBounds().getWidth(), y),
@@ -146,13 +146,13 @@ public class OvitoSerializer extends Serializer {
         );
     }
 
-    private Particle generatePointParticle(int id, Position position) {
-        return new Particle(
+    private Particle generateCornerParticle(int id, Position position) {
+        return new SpecialParticle(
                 id,
                 new Radius(0.01, 0.01, 0.01),
                 position,
                 Velocity.ZERO,
-                Type.HUMAN
+                Type.CORNER
         );
     }
 }
