@@ -238,7 +238,7 @@ public class Simulation extends Serializable {
         double maxX = this.configuration.getBounds().getWidth() - this.configuration.getBounds().getZombieBoundWidth();
         double diameter = this.configuration.getParticleConfiguration().getMaxRadius() * 2;
 
-        double x = this.configuration.getParticleConfiguration().getMaxRadius();
+        double x = this.configuration.getParticleConfiguration().getMaxRadius() + 0.001;
         double y = minY;
 
         boolean positionTaken = !this.allParticles.isEmpty();
@@ -391,6 +391,9 @@ public class Simulation extends Serializable {
         final double max_x = this.configuration.getBounds().getWidth();
         final double max_y = this.configuration.getBounds().getHeight();
 
+        if(particle instanceof Human && this.hasReachedDoor((Human)particle)) {
+            return wallsInContact;
+        }
         if (pos_x - r <= min_x || pos_x + r >= max_x) {
             wallsInContact.add(new Position(pos_x - r <= min_x ? min_x : max_x, pos_y));
         } else if (pos_y - r <= min_y || pos_y + r >= max_y) {
@@ -437,7 +440,7 @@ public class Simulation extends Serializable {
 
     private boolean hasReachedDoor(Human human) {
         // Consideramos que al menos mitad del humano tiene que estar por fuera (por eso x >= width)
-        return human.getPosition().getX() >= this.configuration.getBounds().getWidth()
+        return human.getPosition().getX() >= this.configuration.getBounds().getWidth() - human.getRadius().getCurrentRadius()
                 && human.getPosition().getY() >= this.configuration.getBounds().getDoorsStartY() + human.getRadius().getCurrentRadius()
                 && human.getPosition().getY() <= this.configuration.getBounds().getDoorsEndY() - human.getRadius().getCurrentRadius();
     }

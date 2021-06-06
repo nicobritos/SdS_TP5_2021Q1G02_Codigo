@@ -11,11 +11,13 @@ public final class Contractile {
     private Contractile() {
     }
 
-    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, List<Position> inContactWalls,Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
+    public static Velocity calculateVelocity(Position position, List<Particle> otherParticles, List<Position> inContactWalls, Position targetPosition, double maxVelocity, Radius radius, double beta, boolean isInContact) {
         if (isInContact) {
-            List<Position> allPositions = otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList());
-            allPositions.addAll(inContactWalls);
-            return calculateEscapeVelocity(position, allPositions, maxVelocity);
+            if(!inContactWalls.isEmpty()) {
+                return calculateEscapeVelocity(position, inContactWalls, maxVelocity);
+            }
+            List<Position> otherParticlesPosition = otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList());
+            return calculateEscapeVelocity(position, otherParticlesPosition, maxVelocity);
         }
 
         final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, radius, beta);
