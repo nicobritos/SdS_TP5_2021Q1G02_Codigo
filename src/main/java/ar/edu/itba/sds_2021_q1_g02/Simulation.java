@@ -11,20 +11,19 @@ import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
     private final Collection<Zombie> zombieParticles;
-    private final Collection<Human> humanParticles;
+    private final Collection<Human> healthyHumanParticles;
     private final Collection<Particle> allParticles;
     private final SimulationConfiguration configuration;
     private final Random random;
     private double lastHumanSpawned = Double.NEGATIVE_INFINITY;
     private int totalHumanCount;
     private int totalCount;
-    private double maxTime = 100;
     private final TreeMap<Double, Collection<Human>> bittenHumansTime;
 
     public Simulation(SimulationConfiguration configuration) {
-        this.zombieParticles = new LinkedList<>();
-        this.humanParticles = new LinkedList<>();
-        this.allParticles = new LinkedList<>();
+        this.zombieParticles = new HashSet<>();
+        this.healthyHumanParticles = new HashSet<>();
+        this.allParticles = new HashSet<>();
         this.configuration = configuration;
         this.random = new Random();
         this.bittenHumansTime = new TreeMap<>(Double::compare);
@@ -35,9 +34,9 @@ public class Simulation extends Serializable {
         Step step = this.calculateFirstStep();
         this.serialize(this.allParticles, step);
 
-        while (step.getAbsoluteTime().doubleValue() < this.maxTime) {
+        while (!this.healthyHumanParticles.isEmpty()) {
             step = this.simulateStep(step);
-            if (step.getAbsoluteTime().doubleValue() >= this.maxTime)
+            if (this.healthyHumanParticles.isEmpty())
                 step.setLastStep(true);
 
             this.serialize(this.allParticles, step);
@@ -94,7 +93,6 @@ public class Simulation extends Serializable {
             entry.getValue().forEach(human -> {
                 if (human.hasBeenBitten()) {
                     this.allParticles.remove(human);
-                    this.humanParticles.remove(human);
 
                     Zombie zombie = human.toZombie(this.getStartingParticleZone(),
                             this.configuration.getZombieRadius());
@@ -113,18 +111,16 @@ public class Simulation extends Serializable {
     }
 
     private void moveHumans(double dt) {
-        Iterator<Human> iterator = this.humanParticles.iterator();
+        Iterator<Human> iterator = this.healthyHumanParticles.iterator();
         while (iterator.hasNext()) {
             Human human = iterator.next();
-            if (human.hasBeenBitten()) {
-                // Si el humano fue mordido por un zombie no lo movemos, sin importar su entorno.
-                continue;
-            }
+
             // Movemos particula
             human.setPosition(Contractile.calculatePosition(human.getPosition(), human.getVelocity(), dt));
             // TODO: Poner humanParticles y cambiar el endPosition por un target que escape los zombies
             // Calculamos nueva velocidad y radio
             this.putHumanVelocity(human, dt);
+
             if (this.hasReachedDoor(human)) {
                 iterator.remove();
                 this.allParticles.remove(human);
@@ -229,7 +225,7 @@ public class Simulation extends Serializable {
             Human human = this.spawnHuman(this.getHumanStartingPosition(), this.configuration.getHumanRadius());
 
             this.allParticles.add(human);
-            this.humanParticles.add(human);
+            this.healthyHumanParticles.add(human);
             this.totalHumanCount++;
             this.totalCount++;
         }
@@ -440,9 +436,8 @@ public class Simulation extends Serializable {
 
     private Human getNearestHuman(Particle zombie) {
         return Optional.ofNullable(
-                this.humanParticles
+                this.healthyHumanParticles
                         .parallelStream()
-                        .filter(human -> !human.hasBeenBitten())
                         .collect(Collectors.toMap(human -> human.distanceTo(zombie), human -> human, (o, o2) -> o,
                                 TreeMap::new))
                         .firstEntry()
@@ -460,13 +455,16 @@ public class Simulation extends Serializable {
     }
 
     private void calculateBittenZombies(double absoluteTime) {
-        this.humanParticles
-                .stream()
-                .filter(human -> !this.getParticlesInContact(this.zombieParticles, human).isEmpty() && !human.hasBeenBitten())
-                .forEach(human -> {
-                    human.bite();
-                    this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(human);
-                });
+        Iterator<Human> humanIterator = this.healthyHumanParticles.iterator();
+        while (humanIterator.hasNext()) {
+            Human human = humanIterator.next();
+
+            if (!this.getParticlesInContact(this.zombieParticles, human).isEmpty()) {
+                human.bite();
+                this.bittenHumansTime.computeIfAbsent(absoluteTime, c -> new LinkedList<>()).add(human);
+                humanIterator.remove();
+            }
+        }
     }
 
     private ParticleZone getStartingParticleZone() {
