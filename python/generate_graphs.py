@@ -8,7 +8,8 @@ def main():
     #si esta en x>19.5  entonces llego a la salida
     #guardo su id y sugo iterando en todos
     step_index = 0
-    cantZ = [2, 5,10, 15,20,25,30,35]
+    # cantZ = [2, 5,10, 15,20,25,30,35]
+    cantZ=[10]
     cant_index = 0
 
     cant2 =[]
@@ -21,16 +22,22 @@ def main():
             if os.path.isfile(csvfile):
                 f = open(csvfile) 
                 line = f.readline().split('\t')
+            # print(csvfile)
             while os.path.isfile(csvfile) and line[0]!='':
-                f.readline()
+                
                 if firstline == False:
                     line = f.readline().split('\t')
-                    #print(line)
-                    if line[0]!='' and line[8] == "1.0\n" and float(line[2]) > 18 and int(line[0])>0: #es humano y esta  en la llegada
-                        
+
+                    # if line[0]!= '' and (step_index == 1100):
+                    #     print(line)
+                    #     print(step_index)
+                    #     print(line[0] + ' ' + line[2] )
+                    if line[0]!='' and line[8] == "1.0\n" and float(line[2]) > 19 and int(line[0])>0: #es humano y esta  en la llegada
+                        print(step_index)
                         id = int(line[0])
                         ids.append(id)
                 else:
+                    f.readline()
                     firstline = False
             step_index+=50
             # print(step_index)
@@ -41,6 +48,7 @@ def main():
                 res.append(i)
         cant2.append(len(res))
         print(cant2)
+        # print(ids)
         cant_index+=1
 
 
