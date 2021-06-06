@@ -2,6 +2,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Human extends Particle {
     private final Set<Zombie> chasedBy;
@@ -20,7 +21,7 @@ public class Human extends Particle {
 
     public void bite() {
         this.setType(Type.BITTEN_HUMAN);
-        // TODO: Iterate chasing zombies to recalculate new next position
+        this.getRadius().setCurrentRadius(this.getRadius().getMinRadius());
     }
 
     public Zombie toZombie() {
@@ -34,6 +35,10 @@ public class Human extends Particle {
 
     public void removeChasingZombie(Zombie zombie) {
         this.chasedBy.remove(zombie);
+    }
+
+    public Set<Zombie> getChasingZombies() {
+        return new HashSet<>(this.chasedBy);
     }
 
     @Override

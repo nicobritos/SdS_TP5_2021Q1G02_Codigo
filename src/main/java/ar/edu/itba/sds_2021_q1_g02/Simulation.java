@@ -126,6 +126,7 @@ public class Simulation extends Serializable {
             if (this.hasReachedDoor(human)) {
                 iterator.remove();
                 this.allParticles.remove(human);
+                human.getChasingZombies().forEach(zombie -> zombie.setChasing(null));
             }
         }
     }
@@ -447,8 +448,8 @@ public class Simulation extends Serializable {
         // TODO: Ver si usar el current, el max o una combinacion, ni idea
         double totalRadius = sourceParticle.getRadius().getCurrentRadius() + targetParticle.getRadius().getCurrentRadius();
         return new Position(
-                sourceParticle.getPosition().getX() + positionVector.getX() * totalRadius,
-                sourceParticle.getPosition().getY() + positionVector.getY() * totalRadius
+                targetParticle.getPosition().getX() + positionVector.getX() * totalRadius,
+                targetParticle.getPosition().getY() + positionVector.getY() * totalRadius
         );
     }
 
