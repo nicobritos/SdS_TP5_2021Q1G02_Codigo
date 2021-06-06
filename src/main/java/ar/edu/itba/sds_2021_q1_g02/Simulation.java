@@ -6,6 +6,7 @@ import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
@@ -373,7 +374,7 @@ public class Simulation extends Serializable {
     }
 
     private List<Particle> isInContact(Collection<? extends Particle> neighbors, Particle particle) {
-        return neighbors.stream().filter(p -> !p.equals(particle) && p.isInContact(particle)).collect(Collectors.toList());
+        return neighbors.parallelStream().filter(p -> !p.equals(particle) && p.isInContact(particle)).collect(Collectors.toList());
     }
 
     private List<Particle> computeNeighbors(Position position, Position targetPosition,
@@ -398,18 +399,16 @@ public class Simulation extends Serializable {
     }
 
     private Human getNearestHuman(Particle zombie) {
-        double minDistance = Double.POSITIVE_INFINITY;
-        Human nearestHuman = null;
-
-        for (Human human : this.humanParticles) {
-            double distance = human.distanceTo(zombie);
-            if (distance <= this.configuration.getParticleConfiguration().getZombieFOV() && distance < minDistance) {
-                nearestHuman = human;
-                minDistance = distance;
-            }
-        }
-
-        return nearestHuman;
+        return Optional.ofNullable(
+                this.humanParticles
+                        .parallelStream()
+                        .filter(human -> !human.hasBeenBitten())
+                        .collect(Collectors.toMap(human -> human.distanceTo(zombie), human -> human, (o, o2) -> o, TreeMap::new))
+                        .firstEntry()
+        )
+                .filter(entry -> entry.getKey() <= this.configuration.getParticleConfiguration().getZombieFOV())
+                .map(Entry::getValue)
+                .orElse(null);
     }
 
     private boolean hasReachedDoor(Human human) {
