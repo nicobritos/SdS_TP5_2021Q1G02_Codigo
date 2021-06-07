@@ -466,21 +466,36 @@ public class Simulation extends Serializable {
 
     private Map<Position, RepulsionVectorConstants> computeWalls(Particle from) {
         Map<Position, RepulsionVectorConstants> walls = new HashMap<>();
+        final Bounds bounds = this.configuration.getBounds();
 
         final Position position = from.getPosition();
-        final Position horizontalWall = new Position(position.getX(), position.getY() >= 10 ? this.configuration.getBounds().getHeight() : 0);
+        final Position horizontalWall = new Position(position.getX(), position.getY() >= 10 ? bounds.getHeight() : 0);
 
         double verticalWallY;
-        if (position.getX() >= 10 && this.configuration.getBounds().getDoorsStartY() <= position.getY() && position.getY() <= this.configuration.getBounds().getDoorsEndY()) {
-            verticalWallY = position.getY() >= 10 ? this.configuration.getBounds().getDoorsEndY() : this.configuration.getBounds().getDoorsStartY();
+        boolean calculateVerticalWall;
+        if (position.getX() >= 10 && bounds.getDoorsStartY() <= position.getY() && position.getY() <= this.configuration.getBounds().getDoorsEndY()) {
+            verticalWallY = position.getY() >= 10 ? bounds.getDoorsEndY() : bounds.getDoorsStartY();
+            calculateVerticalWall = position.getX() <= bounds.getWidth() - bounds.getDoorsSize() * 2;
         } else {
             verticalWallY = position.getY();
+            calculateVerticalWall = true;
         }
 
-        final Position verticalWall = new Position(position.getX() >= 10 ? this.configuration.getBounds().getWidth() : 0, verticalWallY);
+        final Position verticalWall = new Position(position.getX() >= 10 ? bounds.getWidth() : 0, verticalWallY);
 
-        walls.put(verticalWall, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(verticalWall), true));
-        walls.put(horizontalWall, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(horizontalWall), true));
+        if (calculateVerticalWall) {
+            RepulsionVectorConstants verticalConstants = DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(verticalWall), true);
+            if (Math.abs(bounds.getWidth() - position.getX()) <= 1 || position.getX() <= 1) {
+                verticalConstants = verticalConstants.multiply(10); // Evasivo urgente
+            }
+            walls.put(verticalWall, verticalConstants);
+        }
+
+        RepulsionVectorConstants horizontalConstants = DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(horizontalWall), true);
+        if (Math.abs(bounds.getHeight() - position.getY()) <= 1 || position.getY() <= 1) {
+            horizontalConstants = horizontalConstants.multiply(10); // Evasivo urgente
+        }
+        walls.put(horizontalWall, horizontalConstants);
 
         return walls;
     }
