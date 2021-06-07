@@ -3,9 +3,7 @@ package ar.edu.itba.sds_2021_q1_g02.models;
 import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 import javafx.geometry.Pos;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class Contractile {
@@ -22,9 +20,13 @@ public final class Contractile {
             double radius,
             double beta,
             boolean isInContactWithParticle,
-            boolean isInContactWithWall) {
+            boolean isInContactWithWall)
+    {
         if (isInContactWithParticle || isInContactWithWall) {
             List<Position> inContactPositions = new ArrayList<>();
+            if (isInContactWithWall && isInContactWithParticle)
+                return Velocity.ZERO;
+
             if (isInContactWithParticle) {
                 inContactPositions.addAll(otherParticles.keySet().stream().map(Particle::getPosition).collect(Collectors.toList()));
             }
@@ -75,8 +77,11 @@ public final class Contractile {
                 velocityMagnitude * avoidanceTargetDirection.getY());
     }
 
-    private static Velocity calculateEscapeVelocity(Position position, List<Position> othersPosition,
-                                                    double velocityMagnitude) {
+    private static Velocity calculateEscapeVelocity(
+            Position position,
+            List<Position> othersPosition,
+            double velocityMagnitude
+    ) {
         Vector2D sumEij = new Vector2D(0, 0);
         for (Position pos : othersPosition) {
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, pos);

@@ -25,29 +25,37 @@ public class App {
     private static final double HUMAN_RADIUS = 0.1;
     private static final double ZOMBIE_RADIUS = 0.1;
 
-    private static final int[] S_B_ZOMBIES = {10};
-//    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
+    private static final int[] S_B_ZOMBIES = {2, 5, 10, 15, 20, 25, 30, 35};
+    private static final double S_B_VZS = 1;
+
+    private static final int S_C_ZOMBIES = 10;
     private static final double[] S_C_VZS = {0.4, 0.8, 1.2, 1.6, 2, 2.4};
 
-    private static final double SERIALIZE_EVERY = 0.5;
-    private static final SimulationSerializer SIMULATION_SERIALIZER = new SimulationSerializer(
-            step -> "output/simulation_1.tsv",
-            App.SERIALIZE_EVERY
-    );
+    private static final double SERIALIZE_EVERY = 0.1;
 
     public static void main(String[] args) {
         System.out.println("------------- 3.b -------------");
-        App.simulationA();
+        App.simulationB();
+        System.out.println("-------------------------------");
+
+        System.out.println("------------- 3.c -------------");
+        App.simulationC();
         System.out.println("-------------------------------");
     }
 
-    private static void simulationA() {
-        for (int i = 0; i < 6; i++) {
-            App.simulate(App.S_B_ZOMBIES[0], App.S_C_VZS[i]);
+    private static void simulationB() {
+        for (int i = 0; i < App.S_B_ZOMBIES.length; i++) {
+            App.simulate(App.S_B_ZOMBIES[i], App.S_B_VZS, "b");
         }
     }
 
-    private static void simulate(int maxZombies, double vz) {
+    private static void simulationC() {
+        for (int i = 0; i < App.S_C_VZS.length; i++) {
+            App.simulate(App.S_C_ZOMBIES, App.S_C_VZS[i], "c");
+        }
+    }
+
+    private static void simulate(int maxZombies, double vz, String simulationName) {
         SimulationConfiguration configuration = new SimulationConfiguration(
                 App.DT,
                 new ParticleConfiguration(
@@ -88,7 +96,7 @@ public class App {
                             color.getGreen() + "\t" +
                             color.getBlue();
                 },
-                step -> "output/simulation_" + maxZombies + "_" + vz + "_" + step + ".xyz",
+                step -> "output/simulation_" + simulationName + "_" + maxZombies + "_" + vz + "_" + step + ".xyz",
                 configuration,
                 App.SERIALIZE_EVERY
         ));
