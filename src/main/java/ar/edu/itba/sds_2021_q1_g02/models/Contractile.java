@@ -12,7 +12,7 @@ public final class Contractile {
     }
 
     public static Velocity calculateVelocity(Position position, List<Particle> otherParticles,
-                                             List<Position> inContactWalls, Position targetPosition,
+                                             List<Position> wallsPosition, Position targetPosition,
                                              double maxVelocity, ParticleZone particleZone, double radius,
                                              double beta, boolean isInContactWithParticle,
                                              boolean isInContactWithWall) {
@@ -22,13 +22,14 @@ public final class Contractile {
                 inContactPositions.addAll(otherParticles.stream().map(Particle::getPosition).collect(Collectors.toList()));
             }
             if (isInContactWithWall) {
-                inContactPositions.addAll(inContactWalls);
+                inContactPositions.addAll(wallsPosition);
             }
             return calculateEscapeVelocity(position, inContactPositions, maxVelocity);
         }
 
         final double velocityMagnitude = calculateVelocityMagnitude(maxVelocity, particleZone, beta);
-        return calculateDesiredVelocity(position, radius, otherParticles, targetPosition, velocityMagnitude);
+        return calculateDesiredVelocity(position, radius, otherParticles, wallsPosition, targetPosition,
+                velocityMagnitude);
 
     }
 
@@ -55,8 +56,10 @@ public final class Contractile {
     }
 
     private static Velocity calculateDesiredVelocity(Position position, double radius, List<Particle> othersPosition,
+                                                     List<Position> wallsPosition,
                                                      Position targetPosition, double velocityMagnitude) {
         final Vector2D avoidanceTargetDirection = calculateAvoidanceTargetDirection(position, radius, othersPosition,
+                wallsPosition,
                 targetPosition);
         return new Velocity(velocityMagnitude * avoidanceTargetDirection.getX(),
                 velocityMagnitude * avoidanceTargetDirection.getY());
@@ -76,7 +79,9 @@ public final class Contractile {
     }
 
     private static Vector2D calculateAvoidanceTargetDirection(Position position, double radius,
-                                                              List<Particle> otherParticles, Position targetPosition) {
+                                                              List<Particle> otherParticles,
+                                                              List<Position> wallsPosition,
+                                                              Position targetPosition) {
         Vector2D avoidanceTarget = Vector2DUtils.calculateVectorFromTwoPositions(targetPosition, position);
         avoidanceTarget = Vector2DUtils.calculateNormalizedVector(avoidanceTarget);
         for (Particle particle : otherParticles) {
@@ -85,6 +90,15 @@ public final class Contractile {
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, particle.getPosition());
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
             final double dij = position.distanceTo(particle.getPosition()) - radius - particle.getRadius();
+            final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
+            avoidanceTarget = avoidanceTarget.add(repVec);
+        }
+
+        for (Position wall : wallsPosition) {
+            final double angle = Vector2DUtils.calculateAngleByThreePositions(position, targetPosition, wall);
+            final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, wall);
+            final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
+            final double dij = position.distanceTo(wall) - radius;
             final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, 1, 1);
             avoidanceTarget = avoidanceTarget.add(repVec);
         }

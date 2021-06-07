@@ -143,21 +143,23 @@ public class Simulation extends Serializable {
         Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(), human.getRadius());
         List<Particle> neighbors = this.computeNeighbors(human, exitDoorPosition, this.allParticles);
         List<Particle> inContactParticles = this.getParticlesInContact(neighbors, human);
-        List<Position> inContactWalls = this.getNearestPositionOfWallInContact(human);
+        List<Position> walls = this.getNearestPositionOfWallInContact(human);
+        final boolean isInContactWalls = !walls.isEmpty();
+        if (!isInContactWalls) walls = this.computeWalls(human);
         human.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(human.getParticleZone(), dt,
                 0.5,
                 !inContactParticles.isEmpty()));
         human.setVelocity(Contractile.calculateVelocity(
                 human.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
-                inContactWalls,
+                walls,
                 exitDoorPosition,
                 this.configuration.getParticleConfiguration().getVh(),
                 human.getParticleZone(),
                 human.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
                 !inContactParticles.isEmpty(),
-                !inContactWalls.isEmpty()
+                isInContactWalls
         ));
     }
 
@@ -175,10 +177,12 @@ public class Simulation extends Serializable {
 
         this.setChasing(zombie, humanTarget);
 
-        List<Particle> neighbors = this.computeNeighbors(zombie, targetPosition,
-                this.zombieParticles);
+        List<Particle> neighbors = this.computeNeighbors(zombie, targetPosition, this.zombieParticles);
         List<Particle> inContactParticles = this.getParticlesInContact(neighbors, zombie);
         List<Position> inContactWalls = this.getNearestPositionOfWallInContact(zombie);
+        List<Position> walls = this.getNearestPositionOfWallInContact(zombie);
+        final boolean isInContactWalls = !walls.isEmpty();
+        if (!isInContactWalls) walls = this.computeWalls(zombie);
 
         zombie.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(zombie.getParticleZone(),
                 dt, 0.5,
@@ -186,14 +190,14 @@ public class Simulation extends Serializable {
         zombie.setVelocity(Contractile.calculateVelocity(
                 zombie.getPosition(),
                 !inContactParticles.isEmpty() ? inContactParticles : neighbors,
-                inContactWalls,
+                walls,
                 targetPosition,
                 this.configuration.getParticleConfiguration().getVz(),
                 zombie.getParticleZone(),
                 zombie.getRadius(),
                 this.configuration.getParticleConfiguration().getBeta(),
                 !inContactParticles.isEmpty(),
-                !inContactWalls.isEmpty()
+                isInContactWalls
         ));
     }
 
@@ -441,6 +445,17 @@ public class Simulation extends Serializable {
             }
         }
         return validParticles;
+    }
+
+    private List<Position> computeWalls(Particle from) {
+        final Position position = from.getPosition();
+        final Velocity velocity = from.getVelocity();
+        List<Position> walls = new ArrayList<>();
+        final Position verticalWall = new Position(velocity.getxSpeed() >= 0 ? this.configuration.getBounds().getWidth() : 0, position.getY());
+        final Position horizontalWall = new Position(position.getX(), velocity.getySpeed() >= 0 ? this.configuration.getBounds().getHeight() : 0);
+        walls.add(verticalWall);
+        walls.add(horizontalWall);
+        return walls;
     }
 
     private Human getNearestHuman(Particle zombie) {
