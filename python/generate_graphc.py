@@ -34,8 +34,8 @@ def main():
     
     plt.subplots()
     
-    plt.xlabel('Velocidad de zombies')
-    plt.ylabel('Cantidad de humanos que llegan a la salida')
+    plt.xlabel('Velocidad de zombies (m/s)')
+    plt.ylabel('Fraccion de humanos que llegan a la salida')
 
     plt.errorbar(x, y, yerr=std_error, fmt='o')
     plt.savefig('alive_velocity.png')

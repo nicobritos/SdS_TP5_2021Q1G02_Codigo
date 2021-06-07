@@ -35,7 +35,7 @@ def main():
     plt.subplots()
     
     plt.xlabel('Cantidad de zombies')
-    plt.ylabel('Cantidad de humanos que llegan a la salida')
+    plt.ylabel('Fraccion de humanos que llegan a la salida')
 
     plt.errorbar(x, y, yerr=std_error, fmt='o')
     plt.savefig('alive.png')

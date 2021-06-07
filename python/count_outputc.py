@@ -16,9 +16,10 @@ def main():
     for cant in cantZ:
         ids = []
         #leemos todos los archivos de un mismo timeline
-        while step_index!= 10000:
+        csvfile ="../output/simulation_c_10_" + str(cantZ[cant_index])+"_"+ str(step_index)+ ".xyz"
+        while os.path.isfile(csvfile):
             firstline = True
-            csvfile ="../output/simulation_10_" + str(cantZ[cant_index])+"_"+ str(step_index)+ ".xyz"
+            
             if os.path.isfile(csvfile):
                 f = open(csvfile) 
                 line = f.readline().split('\t')
@@ -34,7 +35,8 @@ def main():
                 else:
                     f.readline()
                     firstline = False
-            step_index+=50
+            step_index+=10
+            csvfile ="../output/simulation_c_10_" + str(cantZ[cant_index])+"_"+ str(step_index)+ ".xyz"
         step_index = 0
         cant2.append(len(ids))
         cant_index+=1

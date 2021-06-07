@@ -4,21 +4,18 @@ import csv
 import os.path
 
 def main():
-    #leo el archivo
-    #si esta en x>19.5  entonces llego a la salida
-    #guardo su id y sugo iterando en todos
     step_index = 0
     cantZ = [2, 5,10, 15,20,25,30,35]
-    # cantZ=[10]
     cant_index = 0
 
     cant2 =[]
     for cant in cantZ:
         ids = []
         #leemos todos los archivos de un mismo timeline
-        while step_index!= 10000:
+        csvfile ="../output/simulation_b_" + str(cantZ[cant_index])+"_1.0_"+ str(step_index)+ ".xyz"
+        while os.path.isfile(csvfile):
             firstline = True
-            csvfile ="../output/simulation_" + str(cantZ[cant_index])+"_1.0_"+ str(step_index)+ ".xyz"
+            
             if os.path.isfile(csvfile):
                 f = open(csvfile) 
                 line = f.readline().split('\t')
@@ -35,6 +32,7 @@ def main():
                     f.readline()
                     firstline = False
             step_index+=50
+            csvfile ="../output/simulation_b_" + str(cantZ[cant_index])+"_1.0_"+ str(step_index)+ ".xyz"
         step_index = 0
         cant2.append(len(ids))
         cant_index+=1
