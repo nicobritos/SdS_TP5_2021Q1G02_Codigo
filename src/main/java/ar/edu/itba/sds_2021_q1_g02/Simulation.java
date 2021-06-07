@@ -418,6 +418,7 @@ public class Simulation extends Serializable {
 
     private Map<Position, RepulsionVectorConstants> getNearestPositionOfWallInContact(Particle particle) {
         Map<Position, RepulsionVectorConstants> wallsInContact = new HashMap<>();
+
         final double pos_x = particle.getPosition().getX();
         final double pos_y = particle.getPosition().getY();
         final double r = particle.getRadius();
@@ -433,7 +434,8 @@ public class Simulation extends Serializable {
         if (pos_x - r <= min_x || pos_x + r >= max_x) {
             Position position = new Position(pos_x - r <= min_x ? min_x : max_x, pos_y);
             wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
-        } else if (pos_y - r <= min_y || pos_y + r >= max_y) {
+        }
+        if (pos_y - r <= min_y || pos_y + r >= max_y) {
             Position position = new Position(pos_x, pos_y - r <= min_y ? min_y : max_y);
             wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
         }
