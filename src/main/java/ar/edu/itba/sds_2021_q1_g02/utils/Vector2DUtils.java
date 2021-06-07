@@ -20,7 +20,13 @@ public class Vector2DUtils {
         else if (cosValue < -1)
             cosValue = -1;
 
-        return Math.acos(cosValue) * 180 / Math.PI;
+        double angle = Math.acos(cosValue) * 180 / Math.PI;
+        if (angle > 90) {
+            angle -= 90;
+        } else if (angle < -90) {
+            angle += 90;
+        }
+        return angle;
     }
 
     public static Vector2D calculateVectorFromTwoPositions(Position positionA, Position positionB) {

@@ -126,8 +126,13 @@ public final class Contractile {
             final Vector2D eij = Vector2DUtils.calculateVectorFromTwoPositions(position, wall);
             final Vector2D normalizedEij = Vector2DUtils.calculateNormalizedVector(eij);
             final double dij = position.distanceTo(wall) - radius;
-            final Vector2D repVec = calculateRepulsionVector(normalizedEij, dij, angle, entry.getValue().getAp(),
-                    entry.getValue().getBp());
+            final Vector2D repVec = calculateRepulsionVector(
+                    normalizedEij,
+                    dij,
+                    angle,
+                    entry.getValue().getAp(),
+                    entry.getValue().getBp()
+            );
             avoidanceTarget = avoidanceTarget.add(repVec);
         }
         return Vector2DUtils.calculateNormalizedVector(avoidanceTarget);

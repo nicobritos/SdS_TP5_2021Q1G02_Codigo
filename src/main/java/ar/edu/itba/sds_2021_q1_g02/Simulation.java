@@ -14,12 +14,8 @@ public class Simulation extends Serializable {
     private static final RepulsionVectorConstants DEFAULT_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1);
     private static final RepulsionVectorConstants SAME_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 0.1); // Puede ser 0.5
     private static final RepulsionVectorConstants DISTINCT_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1); // Puede ser 1
-//    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3};
-//    private static final double FACTOR_DECAY_RATE = 0.5;
-    private static final double[] TOP_FACTOR = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}; // Default, 20
-//    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3}; // Default, 20
-    private static final double[][] AREA_FACTORS = Simulation.computeAreasFactors(); // 20x20
-    private static final double FACTOR_DECAY_RATE = 0.5;
+//    private static final double[] FACTORS = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}; // Default, 20
+    private static final double[] FACTORS = {2, 1.8, 1.6, 1.5, 1.3, 1.2, 1.15, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.15, 1.2, 1.3, 1.5, 1.6, 1.8, 2}; // Default, 20
 
     private final Collection<Zombie> zombieParticles;
     private final Collection<Human> healthyHumanParticles;
@@ -177,16 +173,6 @@ public class Simulation extends Serializable {
                 !inContactParticles.isEmpty(),
                 isInContactWalls
         ));
-    }
-
-    private Map<Particle, RepulsionVectorConstants> applyVectorConstants(Map<Particle, RepulsionVectorConstants> neighbors) {
-        for (Map.Entry<Particle, RepulsionVectorConstants> entry : neighbors.entrySet()) {
-            if (entry.getKey() instanceof Zombie) {
-                entry.setValue(entry.getValue().multiply(Simulation.getAreaFactor(entry.getKey().getPosition())));
-            }
-        }
-
-        return neighbors;
     }
 
     private void putZombieVelocity(Zombie zombie, double dt) {
@@ -444,11 +430,11 @@ public class Simulation extends Serializable {
 
         if (pos_x - r <= min_x || pos_x + r >= max_x) {
             Position position = new Position(pos_x - r <= min_x ? min_x : max_x, pos_y);
-            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
+            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(position), true));
         }
         if (pos_y - r <= min_y || pos_y + r >= max_y) {
             Position position = new Position(pos_x, pos_y - r <= min_y ? min_y : max_y);
-            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(position)));
+            wallsInContact.put(position, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(position), true));
         }
         return wallsInContact;
     }
@@ -493,8 +479,8 @@ public class Simulation extends Serializable {
 
         final Position verticalWall = new Position(position.getX() >= 10 ? this.configuration.getBounds().getWidth() : 0, verticalWallY);
 
-        walls.put(verticalWall, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(verticalWall)));
-        walls.put(horizontalWall, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(horizontalWall)));
+        walls.put(verticalWall, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(verticalWall), true));
+        walls.put(horizontalWall, DEFAULT_REPULSION_VECTOR.multiply(this.getWallFactor(horizontalWall), true));
 
         return walls;
     }
@@ -555,59 +541,20 @@ public class Simulation extends Serializable {
         );
     }
 
+    private double getWallFactor(Position position) {
+        if (position.getY() == 0 || position.getY() == this.configuration.getBounds().getHeight()) {
+            return FACTORS[Simulation.getAreaIndex(position.getX())];
+        }
+
+        return FACTORS[Simulation.getAreaIndex(position.getY())];
+    }
+
     private static boolean isParticleIn(Particle particle, double x, double y) {
         return (particle.getPosition().getX() - particle.getRadius() <= x && x <= particle.getPosition().getX() + particle.getRadius()) && (particle.getPosition().getY() - particle.getRadius() <= y && y <= particle.getPosition().getY() + particle.getRadius());
     }
 
-    private static double getAreaFactor(Position position) {
-        double[][] factors = Simulation.getAreasFactors();
-        int i = Simulation.getXAreaIndex(position);
-        int j = Simulation.getYAreaIndex(position);
-        return factors[i][j];
-    }
-
-    private static int getXAreaIndex(Position position) {
-        return Simulation.getAreaIndex(position.getX());
-    }
-
-    private static int getYAreaIndex(Position position) {
-        return Simulation.getAreaIndex(position.getY());
-    }
-
     private static int getAreaIndex(double p) {
         return Math.max((int) Math.round(Math.floor(p / 20)), 0);
-    }
-
-    private static double[][] getAreasFactors() {
-        return AREA_FACTORS;
-    }
-
-    private static double[][] computeAreasFactors() {
-        double[][] factors = new double[20][20];
-
-        double f = 0;
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < TOP_FACTOR.length; j++) {
-                factors[i][j] = Math.max(TOP_FACTOR[j] - f, 1);
-            }
-            f -= FACTOR_DECAY_RATE;
-        }
-
-        for (int i = 8; i < 12; i++) {
-            for (int j = 0; j < TOP_FACTOR.length; j++) {
-                factors[i][j] = 1; // Middle
-            }
-        }
-
-        f = 0;
-        for (int i = 12; i < 20; i++) {
-            for (int j = 0; j < TOP_FACTOR.length; j++) {
-                factors[i][j] = Math.max(TOP_FACTOR[j] - f, 1);
-            }
-            f += FACTOR_DECAY_RATE;
-        }
-
-        return factors;
     }
 
     private static boolean isParticleInFov(Position sourcePosition, Position otherPosition, double p_m, double b) {
