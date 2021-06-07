@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
     private static final RepulsionVectorConstants DEFAULT_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1);
-    private static final RepulsionVectorConstants SAME_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1); // Puede ser 0.5
+    private static final RepulsionVectorConstants SAME_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 0.1); // Puede ser 0.5
     private static final RepulsionVectorConstants DISTINCT_PARTICLE_REPULSION_VECTOR = new RepulsionVectorConstants(1, 1); // Puede ser 1
 //    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3};
 //    private static final double FACTOR_DECAY_RATE = 0.5;
@@ -201,7 +201,6 @@ public class Simulation extends Serializable {
         Map<Particle, RepulsionVectorConstants> inContactParticles = this.getParticlesInContact(neighbors.keySet(), zombie);
         Map<Position, RepulsionVectorConstants> walls = this.getNearestPositionOfWallInContact(zombie);
         final boolean isInContactWalls = !walls.isEmpty();
-        if (!isInContactWalls) walls = this.computeWalls(zombie);
 
         zombie.getParticleZone().setCurrentRadius(Contractile.calculateParticleZoneRadius(zombie.getParticleZone(),
                 dt, 0.5,
@@ -467,16 +466,23 @@ public class Simulation extends Serializable {
     }
 
     private Map<Position, RepulsionVectorConstants> computeWalls(Particle from) {
-        final Position position = from.getPosition();
         Map<Position, RepulsionVectorConstants> walls = new HashMap<>();
+
+        final Position position = from.getPosition();
         final Position horizontalWall = new Position(position.getX(), position.getY() >= 10 ? this.configuration.getBounds().getHeight() : 0);
-        double verticalWallY = position.getY();
-        if( this.configuration.getBounds().getDoorsStartY() <= position.getY() &&  position.getY() <= this.configuration.getBounds().getDoorsEndY()) {
+
+        double verticalWallY;
+        if (position.getX() >= 10 && this.configuration.getBounds().getDoorsStartY() <= position.getY() && position.getY() <= this.configuration.getBounds().getDoorsEndY()) {
             verticalWallY = position.getY() >= 10 ? this.configuration.getBounds().getDoorsEndY() : this.configuration.getBounds().getDoorsStartY();
+        } else {
+            verticalWallY = position.getY();
         }
+
         final Position verticalWall = new Position(position.getX() >= 10 ? this.configuration.getBounds().getWidth() : 0, verticalWallY);
+
         walls.put(verticalWall, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(verticalWall)));
         walls.put(horizontalWall, DEFAULT_REPULSION_VECTOR.multiply(Simulation.getAreaFactor(horizontalWall)));
+
         return walls;
     }
 

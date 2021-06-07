@@ -5,8 +5,8 @@ public class RepulsionVectorConstants {
     private final double bp;
 
     public RepulsionVectorConstants(double ap, double bp) {
-        if (ap == 0)
-            throw new IllegalArgumentException("ap can't be zero");
+//        if (ap == 0)
+//            throw new IllegalArgumentException("ap can't be zero");
         if (bp <= 0)
             throw new IllegalArgumentException("bp must be a positive number");
 
