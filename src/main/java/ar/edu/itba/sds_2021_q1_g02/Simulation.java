@@ -7,6 +7,7 @@ import ar.edu.itba.sds_2021_q1_g02.utils.Vector2DUtils;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Simulation extends Serializable {
@@ -16,8 +17,9 @@ public class Simulation extends Serializable {
 //    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3};
 //    private static final double FACTOR_DECAY_RATE = 0.5;
     private static final double[] TOP_FACTOR = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}; // Default, 20
+//    private static final double[] TOP_FACTOR = {3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3}; // Default, 20
     private static final double[][] AREA_FACTORS = Simulation.computeAreasFactors(); // 20x20
-    private static final double FACTOR_DECAY_RATE = 0;
+    private static final double FACTOR_DECAY_RATE = 0.5;
 
     private final Collection<Zombie> zombieParticles;
     private final Collection<Human> healthyHumanParticles;
@@ -149,7 +151,12 @@ public class Simulation extends Serializable {
 
     private void putHumanVelocity(Human human, double dt) {
         Position exitDoorPosition = this.getHumanExitDoorPosition(human.getPosition(), human.getRadius());
-        Map<Particle, RepulsionVectorConstants> neighbors = this.applyVectorConstants(this.computeNeighbors(human, exitDoorPosition, this.allParticles));
+        Map<Particle, RepulsionVectorConstants> neighbors = this.computeNeighbors(
+                human,
+                exitDoorPosition,
+                this.allParticles,
+                neighbor -> neighbor instanceof Human && !((Human) neighbor).hasBeenBitten()
+        );
         Map<Particle, RepulsionVectorConstants> inContactParticles = this.getParticlesInContact(neighbors.keySet(), human);
         Map<Position, RepulsionVectorConstants> walls = this.getNearestPositionOfWallInContact(human);
         final boolean isInContactWalls = !walls.isEmpty();
@@ -196,8 +203,12 @@ public class Simulation extends Serializable {
 
         this.setChasing(zombie, humanTarget);
 
-        Map<Particle, RepulsionVectorConstants> neighbors = this.computeNeighbors(zombie, targetPosition,
-                this.zombieParticles);
+        Map<Particle, RepulsionVectorConstants> neighbors = this.computeNeighbors(
+                zombie,
+                targetPosition,
+                this.zombieParticles,
+                Zombie.class::isInstance
+        );
         Map<Particle, RepulsionVectorConstants> inContactParticles = this.getParticlesInContact(neighbors.keySet(), zombie);
         Map<Position, RepulsionVectorConstants> walls = this.getNearestPositionOfWallInContact(zombie);
         final boolean isInContactWalls = !walls.isEmpty();
@@ -445,8 +456,9 @@ public class Simulation extends Serializable {
     private Map<Particle, RepulsionVectorConstants> computeNeighbors(
             Particle from,
             Position targetPosition,
-            Collection<? extends Particle> particles)
-    {
+            Collection<? extends Particle> particles,
+            Predicate<Particle> isSameParticle
+    ) {
         final Position position = from.getPosition();
         final double m = (targetPosition.getY() - position.getY()) / (targetPosition.getX() - position.getX());
         final double p_m = -1 / m;
@@ -459,8 +471,7 @@ public class Simulation extends Serializable {
                 continue;
 
             if (Simulation.isParticleInFov(from.getPosition(), particle.getPosition(), p_m, b)) {
-                boolean sameParticle = from.getClass().equals(particle.getClass());
-                validParticles.put(particle, sameParticle ? SAME_PARTICLE_REPULSION_VECTOR : DISTINCT_PARTICLE_REPULSION_VECTOR);
+                validParticles.put(particle, isSameParticle.test(particle) ? SAME_PARTICLE_REPULSION_VECTOR : DISTINCT_PARTICLE_REPULSION_VECTOR);
             }
         }
 
